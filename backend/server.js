@@ -16,7 +16,7 @@ app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ── Static frontend ────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '../frontend')));
+//app.use(express.static(path.join(__dirname, '../frontend')));
 
 // ── Routes API ─────────────────────────────────────────────
 app.use('/api/services',     require('./routes/services'));
@@ -41,7 +41,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── SPA fallback ───────────────────────────────────────────
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
+//app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
 
 // ── Error handler ──────────────────────────────────────────
 app.use((err, req, res, next) => {
@@ -50,11 +50,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n  ✦ Belle Heure API v2.0`);
-  console.log(`  → http://localhost:${PORT}`);
-  console.log(`  → Supabase : ${configured ? '✓ connecté' : '✗ mode démo'}`);
-  console.log(`  → Stripe   : ${process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('sk_test_...') ? '✓ configuré' : '⚠ mode démo'}\n`);
-});
+//app.listen(PORT, () => {
+  //console.log(`\n  ✦ Belle Heure API v2.0`);
+  //console.log(`  → http://localhost:${PORT}`);
+  //console.log(`  → Supabase : ${configured ? '✓ connecté' : '✗ mode démo'}`);
+  //console.log(`  → Stripe   : ${process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('sk_test_...') ? '✓ configuré' : '⚠ mode démo'}\n`);
+//});
 
 module.exports = app;
