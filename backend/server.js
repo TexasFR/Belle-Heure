@@ -8,7 +8,7 @@ const app  = express();
 const PORT = process.env.PORT || 3001;
 
 // ── Stripe webhook AVANT le json parser ────────────────────
-app.use('/api/payments/webhook', require('./routes/payments').webhookHandler || ((req,res,next)=>next()));
+app.use('/payments/webhook', require('./routes/payments').webhookHandler || ((req,res,next)=>next()));
 
 // ── Middleware ─────────────────────────────────────────────
 app.use(cors({ origin: process.env.NODE_ENV === 'production' ? false : '*', credentials: true }));
@@ -19,15 +19,15 @@ app.use(express.urlencoded({ extended: true }));
 //app.use(express.static(path.join(__dirname, '../frontend')));
 
 // ── Routes API ─────────────────────────────────────────────
-app.use('/api/services',     require('./routes/services'));
-app.use('/api/schedule',     require('./routes/schedule'));
-app.use('/api/appointments', require('./routes/appointments'));
-app.use('/api/gallery',      require('./routes/gallery'));
-app.use('/api/payments',     require('./routes/payments'));
-app.use('/api/users',        require('./routes/users'));
+app.use('/services',     require('./routes/services'));
+app.use('/schedule',     require('./routes/schedule'));
+app.use('/appointments', require('./routes/appointments'));
+app.use('/gallery',      require('./routes/gallery'));
+app.use('/payments',     require('./routes/payments'));
+app.use('/users',        require('./routes/users'));
 
 // ── Health check ───────────────────────────────────────────
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   const stripeOk = !!(process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('sk_test_...'));
   res.json({
     status:        'ok',
@@ -41,7 +41,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── SPA fallback ───────────────────────────────────────────
-//app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
 
 // ── Error handler ──────────────────────────────────────────
 app.use((err, req, res, next) => {

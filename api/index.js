@@ -1,3 +1,4 @@
+const serverless = require('serverless-http');
 const app = require('../backend/server');
 
-export default app;
+module.exports = serverless(app);
