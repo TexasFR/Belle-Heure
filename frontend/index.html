@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Belle Heure — Institut de Beauté</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+/* ══════════════════════════════════════════════════════════
+   VARIABLES & RESET
+══════════════════════════════════════════════════════════ */
+:root{
+  --iv:#FAF7F2; --cr:#F2EDE5; --bl:#E8D5C0; --go:#B8916A; --gl:#D4AA88;
+  --br:#5C3D2E; --bd:#2C1A0E; --mu:#9B8070; --wh:#fff;
+  --re:#C0392B; --gr:#2E7D5A; --az:#1E40AF;
+  --sh:0 2px 24px rgba(92,61,46,.07);
+  --shm:0 4px 32px rgba(92,61,46,.11);
+  --shl:0 8px 56px rgba(92,61,46,.15);
+  --r:4px; --rl:12px; --t:.2s;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--iv);color:var(--bd);font-weight:300;line-height:1.65}
+.hidden{display:none!important}
+a{text-decoration:none;color:inherit}
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 28px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:500;letter-spacing:2.2px;text-transform:uppercase;transition:all var(--t);white-space:nowrap;border-radius:var(--r)}
+.btn-gold{background:var(--go);color:#fff}.btn-gold:hover{background:var(--br);transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,145,106,.35)}
+.btn-dark{background:var(--bd);color:#fff}.btn-dark:hover{background:#3d2516}
+.btn-outline{background:transparent;color:var(--go);border:1.5px solid var(--go)}.btn-outline:hover{background:var(--go);color:#fff}
+.btn-ghost{background:transparent;color:var(--mu);border:1px solid var(--bl)}.btn-ghost:hover{border-color:var(--go);color:var(--go)}
+.btn-red{background:var(--re);color:#fff}.btn-red:hover{opacity:.85}
+.btn-sm{padding:7px 16px;font-size:10.5px;letter-spacing:1.8px}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* ── FORMS ───────────────────────────────────────────── */
+input,select,textarea{width:100%;padding:12px 15px;border:1px solid var(--bl);background:var(--wh);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--bd);outline:none;border-radius:var(--r);transition:border-color var(--t);-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--go)}
+label{display:block;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mu);margin-bottom:6px;font-weight:400}
+.fg{margin-bottom:18px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ── TAGS ────────────────────────────────────────────── */
+.tag{display:inline-block;padding:3px 11px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;border-radius:20px;font-weight:400}
+.tg{background:#EDFBF3;color:#1a7a4a} .tr{background:#FEF1F1;color:#c0392b}
+.to{background:#FEF7EE;color:#b8722a} .tm{background:var(--cr);color:var(--mu)}
+.tb{background:#EFF4FF;color:var(--az)} .tbl{background:var(--bd);color:#fff}
+
+/* ── TOAST ───────────────────────────────────────────── */
+#toast-wrap{position:fixed;bottom:28px;right:28px;z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{pointer-events:auto;background:var(--bd);color:#fff;padding:13px 20px;border-radius:var(--rl);font-size:13px;box-shadow:var(--shl);animation:tsIn .3s ease;display:flex;align-items:center;gap:9px;min-width:240px;max-width:360px}
+.toast.ok{background:var(--gr)}.toast.err{background:var(--re)}
+@keyframes tsIn{from{opacity:0;transform:translateX(32px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── MODAL ───────────────────────────────────────────── */
+.modal-bg{position:fixed;inset:0;background:rgba(44,26,14,.42);backdrop-filter:blur(6px);z-index:8000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--wh);border-radius:var(--rl);box-shadow:var(--shl);max-width:510px;width:100%;animation:mdIn .26s ease;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+@keyframes mdIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--cr);background:var(--wh);flex-shrink:0}
+.modal-hd h3{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:400}
+.modal-x{background:none;border:none;font-size:22px;cursor:pointer;color:var(--mu);line-height:1;transition:color var(--t)}.modal-x:hover{color:var(--bd)}
+.modal-bd{padding:24px;overflow-y:auto;flex:1}
+.modal-ft{padding:14px 24px;border-top:1px solid var(--cr);display:flex;gap:10px;justify-content:flex-end;background:var(--wh);flex-shrink:0}
+
+/* ── NAV ─────────────────────────────────────────────── */
+nav{position:fixed;top:0;left:0;right:0;z-index:600;background:rgba(250,247,242,.95);backdrop-filter:blur(18px);border-bottom:1px solid var(--bl)}
+.nav-in{max-width:1220px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:66px}
+.logo{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:400;letter-spacing:4px;text-transform:uppercase;cursor:pointer;color:var(--bd)}
+.logo em{color:var(--go);font-style:normal}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-link{font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mu);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;font-weight:400;transition:color var(--t);padding:0}
+.nav-link:hover,.nav-link.on{color:var(--go)}
+.nav-r{position:relative;display:flex;align-items:center;gap:12px}
+.ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--go),var(--gl));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;cursor:pointer;transition:transform var(--t);letter-spacing:1px}
+.ava:hover{transform:scale(1.06)}
+.drop{position:absolute;top:calc(100%+10px);right:0;background:var(--wh);border:1px solid var(--bl);border-radius:var(--rl);box-shadow:var(--shl);min-width:196px;z-index:700;overflow:hidden;animation:drpIn .18s ease}
+@keyframes drpIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.drop a{display:flex;align-items:center;gap:9px;padding:12px 18px;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu);cursor:pointer;transition:background var(--t)}
+.drop a:hover{background:var(--iv);color:var(--go)}
+.drop-sep{height:1px;background:var(--cr)}
+
+/* ── PAGES ───────────────────────────────────────────── */
+.page{display:none;padding-top:66px;min-height:100vh}
+.page.on{display:block;animation:pgIn .28s ease}
+@keyframes pgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══════════════════════════════════════════════════════════
+   HOME
+══════════════════════════════════════════════════════════ */
+.hero{min-height:91vh;display:grid;grid-template-columns:1fr 1fr}
+.hero-l{display:flex;flex-direction:column;justify-content:center;padding:80px 72px 80px 80px;background:var(--iv)}
+.hero-r{position:relative;overflow:hidden}
+.hero-r img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-r::after{content:'';position:absolute;inset:0;background:linear-gradient(to right,var(--iv) 0%,transparent 28%)}
+.hero-eyebrow{display:flex;align-items:center;gap:12px;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--go);margin-bottom:28px}
+.hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--go)}
+.hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(54px,6.5vw,100px);font-weight:300;line-height:.97;color:var(--bd);margin-bottom:28px;letter-spacing:-1px}
+.hero-h1 em{font-style:italic;color:var(--go)}
+.hero-sub{font-size:15px;color:var(--mu);line-height:1.8;max-width:430px;margin-bottom:44px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+.hero-badge{position:absolute;bottom:48px;right:48px;background:rgba(250,247,242,.94);backdrop-filter:blur(12px);border-radius:var(--rl);padding:22px 26px;min-width:210px;box-shadow:var(--shm);z-index:2}
+.hb-lbl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--go);margin-bottom:14px}
+.hb-stats{display:flex;gap:22px}
+.hbs-n{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--bd);line-height:1;display:block}
+.hbs-l{font-size:10px;color:var(--mu);margin-top:3px;letter-spacing:1px;text-transform:uppercase}
+
+.section{padding:96px 32px}
+.section-inner{max-width:1220px;margin:0 auto}
+.sec-hd{margin-bottom:52px}
+.sec-ey{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--go);margin-bottom:12px}
+.sec-h2{font-family:'Cormorant Garamond',serif;font-size:clamp(36px,4vw,58px);font-weight:300;color:var(--bd);line-height:1.05}
+
+.svcs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.svc-card{background:var(--wh);padding:32px;border-radius:var(--rl);box-shadow:var(--sh);border:1px solid transparent;transition:all .3s;cursor:pointer;position:relative;overflow:hidden}
+.svc-card::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--go),var(--gl));transform:scaleX(0);transform-origin:left;transition:transform .35s}
+.svc-card:hover{border-color:var(--bl);box-shadow:var(--shm);transform:translateY(-2px)}
+.svc-card:hover::after{transform:scaleX(1)}
+.svc-icon{font-size:30px;margin-bottom:16px}
+.svc-name{font-family:'Cormorant Garamond',serif;font-size:23px;color:var(--bd);margin-bottom:8px}
+.svc-desc{font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:20px}
+.svc-foot{display:flex;justify-content:space-between;align-items:center}
+.svc-price{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--go)}
+.svc-dur{font-size:11px;color:var(--mu);letter-spacing:1px}
+
+/* ══════════════════════════════════════════════════════════
+   GALLERY
+══════════════════════════════════════════════════════════ */
+.gal-hero{background:var(--bd);padding:80px 32px;text-align:center;position:relative;overflow:hidden}
+.gal-hero::before{content:'';position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=1800&q=50') center/cover;opacity:.12;pointer-events:none}
+.gal-hero-inner{position:relative}
+.gal-hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(44px,7vw,84px);font-weight:300;color:var(--iv);letter-spacing:2px;line-height:1}
+.gal-hero p{color:var(--bl);font-size:15px;margin-top:14px}
+
+.gal-filters{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:40px 32px 0}
+.gf{padding:9px 22px;border:1px solid var(--bl);background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;color:var(--mu);border-radius:30px;transition:all var(--t)}
+.gf:hover{border-color:var(--gl);color:var(--go)}.gf.on{background:var(--go);border-color:var(--go);color:#fff}
+
+.gal-masonry{columns:3;column-gap:16px;padding:36px 32px;max-width:1220px;margin:0 auto}
+@media(max-width:900px){.gal-masonry{columns:2}}@media(max-width:540px){.gal-masonry{columns:1}}
+.gal-item{break-inside:avoid;margin-bottom:16px;border-radius:var(--rl);overflow:hidden;cursor:pointer;position:relative;background:var(--cr)}
+.gal-item img{width:100%;height:auto;display:block;transition:transform .5s;border-radius:var(--rl)}
+.gal-item:hover img{transform:scale(1.04)}
+.gal-ov{position:absolute;inset:0;background:rgba(44,26,14,0);transition:background .35s;display:flex;align-items:flex-end;padding:20px;border-radius:var(--rl)}
+.gal-item:hover .gal-ov{background:rgba(44,26,14,.55)}
+.gal-cap{color:#fff;opacity:0;transform:translateY(8px);transition:all .3s}
+.gal-item:hover .gal-cap{opacity:1;transform:translateY(0)}
+.gal-cap-t{font-size:14px;font-weight:500;margin-bottom:3px}
+.gal-cap-c{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;opacity:.7}
+.gal-del{position:absolute;top:12px;right:12px;background:var(--re);color:#fff;border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;z-index:2}
+.gal-item:hover .gal-del{opacity:1}
+.gal-empty{text-align:center;padding:96px 32px;color:var(--mu)}
+.gal-empty .ico{font-size:56px;margin-bottom:18px;opacity:.45;display:block}
+
+/* Lightbox */
+.lb{position:fixed;inset:0;background:rgba(12,6,2,.96);z-index:9500;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.lb img{max-width:90vw;max-height:78vh;object-fit:contain;border-radius:var(--rl)}
+.lb-cap{color:rgba(255,255,255,.55);font-size:13px;margin-top:16px;letter-spacing:1px;text-align:center}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.07);border:none;color:#fff;width:52px;height:52px;font-size:22px;cursor:pointer;border-radius:50%;transition:background .2s}
+.lb-nav:hover{background:rgba(255,255,255,.16)}
+.lb-prev{left:22px}.lb-next{right:22px}
+.lb-close{position:absolute;top:20px;right:22px;background:none;border:none;color:rgba(255,255,255,.5);font-size:28px;cursor:pointer;transition:color .2s}
+.lb-close:hover{color:#fff}
+.lb-count{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.3);font-size:11px;letter-spacing:2px}
+
+/* ══════════════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════════════ */
+.auth-wrap{min-height:calc(100vh - 66px);display:flex;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(135deg,var(--iv),var(--cr))}
+.auth-card{background:var(--wh);border-radius:var(--rl);box-shadow:var(--shl);max-width:460px;width:100%;overflow:hidden}
+.auth-tabs{display:flex;border-bottom:1px solid var(--cr)}
+.auth-tab{flex:1;padding:17px 12px;text-align:center;font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mu);cursor:pointer;transition:all var(--t);border-bottom:2px solid transparent}
+.auth-tab.on{color:var(--go);border-bottom-color:var(--go)}
+.auth-body{padding:38px}
+.auth-body h2{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;margin-bottom:8px}
+.auth-body .sub{color:var(--mu);font-size:13px;margin-bottom:28px}
+
+/* ══════════════════════════════════════════════════════════
+   ACCOUNT
+══════════════════════════════════════════════════════════ */
+.acc-wrap{max-width:1060px;margin:0 auto;padding:56px 32px}
+.acc-hd h1{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;margin-bottom:4px}
+.acc-hd p{color:var(--mu);font-size:13px;margin-bottom:40px}
+.acc-layout{display:grid;grid-template-columns:240px 1fr;gap:28px;align-items:start}
+.acc-nav{background:var(--wh);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden}
+.acc-nav-item{display:flex;align-items:center;gap:10px;padding:14px 18px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--mu);cursor:pointer;transition:all var(--t);border-left:2px solid transparent}
+.acc-nav-item:hover,.acc-nav-item.on{color:var(--go);border-left-color:var(--go);background:var(--iv)}
+.acc-sec{display:none}.acc-sec.on{display:block;animation:fadeUp .22s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══════════════════════════════════════════════════════════
+   BOOKING
+══════════════════════════════════════════════════════════ */
+.book-wrap{max-width:1040px;margin:0 auto;padding:52px 32px}
+.book-hd h1{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;margin-bottom:6px}
+.book-hd p{color:var(--mu);font-size:13px;margin-bottom:38px}
+
+.steps{display:flex;align-items:center;margin-bottom:44px;border-bottom:1px solid var(--bl);padding-bottom:22px}
+.step{display:flex;align-items:center;gap:10px;opacity:.36;transition:opacity .3s}
+.step.on{opacity:1}.step.done{opacity:.65}
+.step-n{width:30px;height:30px;border-radius:50%;border:1px solid var(--bl);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--mu);flex-shrink:0;transition:all .3s}
+.step.on .step-n{background:var(--go);border-color:var(--go);color:#fff;font-size:13px}
+.step.done .step-n{background:var(--gr);border-color:var(--gr);color:#fff;font-size:14px}
+.step-lbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu)}.step.on .step-lbl{color:var(--go)}
+.step-div{flex:1;max-width:48px;height:1px;background:var(--bl)}
+
+.book-layout{display:grid;grid-template-columns:1fr 308px;gap:36px;align-items:start}
+.bstep{display:none}.bstep.on{display:block;animation:fadeUp .28s ease}
+.bstep h2{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;margin-bottom:20px}
+
+/* Service picker */
+.sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.sp-item{background:var(--wh);border:1.5px solid var(--bl);padding:18px 16px;border-radius:var(--rl);cursor:pointer;transition:all var(--t)}
+.sp-item:hover{border-color:var(--gl)}.sp-item.on{border-color:var(--go);background:#FEF9F3}
+.sp-ico{font-size:26px;margin-bottom:10px}
+.sp-name{font-size:14px;font-weight:500;margin-bottom:4px}
+.sp-meta{font-size:12px;color:var(--mu)}
+.sp-price{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--go);margin-top:10px}
+
+/* Calendar */
+.cal{background:var(--wh);border-radius:var(--rl);box-shadow:var(--sh);padding:22px;max-width:374px}
+.cal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.cal-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:300}
+.cal-btn{background:none;border:1px solid var(--bl);width:34px;height:34px;cursor:pointer;font-size:15px;color:var(--mu);transition:all var(--t);border-radius:var(--r)}
+.cal-btn:hover{border-color:var(--go);color:var(--go)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dn{text-align:center;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu);padding:5px 0}
+.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;border-radius:50%;cursor:pointer;transition:all var(--t)}
+.cd.avail:hover{background:var(--cr)}.cd.sel{background:var(--go);color:#fff}
+.cd.past,.cd.blk,.cd.cld{opacity:.28;cursor:not-allowed;pointer-events:none}
+.cd.blk{text-decoration:line-through}
+.cal-legend{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap}
+.cal-leg{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--mu)}
+.cal-leg-dot{width:8px;height:8px;border-radius:50%}
+
+/* Slots */
+.slots-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:9px}
+.slot{padding:11px 6px;border:1px solid var(--bl);background:var(--wh);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;border-radius:var(--r);transition:all var(--t);text-align:center}
+.slot:hover{border-color:var(--gl);background:var(--iv)}.slot.on{background:var(--go);border-color:var(--go);color:#fff}
+.slot.tk{opacity:.28;cursor:not-allowed;pointer-events:none;text-decoration:line-through}
+
+/* Payment method */
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+.pm-card{background:var(--wh);border:2px solid var(--bl);border-radius:var(--rl);padding:20px 16px;cursor:pointer;transition:all var(--t);text-align:center}
+.pm-card:hover{border-color:var(--gl)}.pm-card.on{border-color:var(--go);background:#FEF9F3}
+.pm-ico{font-size:30px;margin-bottom:10px}
+.pm-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.pm-sub{font-size:12px;color:var(--mu);line-height:1.5}
+.pm-badge{display:inline-block;background:var(--go);color:#fff;font-size:9px;letter-spacing:1.5px;padding:2px 9px;border-radius:10px;margin-top:8px;text-transform:uppercase}
+
+#card-element{padding:13px 15px;border:1px solid var(--bl);background:var(--wh);border-radius:var(--r)}
+#card-errors{color:var(--re);font-size:12px;margin-top:5px;min-height:18px}
+.stripe-lock{display:flex;align-items:center;gap:8px;color:var(--mu);font-size:11px;margin-top:12px}
+
+/* Booking summary */
+.bsum{background:var(--wh);border-radius:var(--rl);box-shadow:var(--sh);padding:26px;position:sticky;top:82px}
+.bsum-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--cr)}
+.bsr{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--cr);font-size:13px;gap:10px}
+.bsr:last-of-type{border-bottom:none}
+.bsr-l{color:var(--mu);flex-shrink:0}.bsr-v{font-weight:500;text-align:right}
+.bsum-total{display:flex;justify-content:space-between;align-items:center;padding:14px 0 0;margin-top:10px;border-top:1.5px solid var(--bl)}
+.bst-l{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:1.5px}
+.bst-p{font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--go)}
+.bsum-empty{color:var(--mu);font-size:13px;text-align:center;padding:28px 0;line-height:1.8;opacity:.7}
+
+/* Confirmation */
+.conf{text-align:center;padding:80px 32px;max-width:580px;margin:0 auto}
+.conf-ico{width:88px;height:88px;border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:40px}
+.conf-ico.ok{background:#E8F5EF}.conf-ico.info{background:#FEF7EE}
+.conf h2{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;margin-bottom:14px}
+.conf p{color:var(--mu);line-height:1.8;margin-bottom:32px}
+.conf-det{background:var(--wh);border-radius:var(--rl);padding:22px;box-shadow:var(--sh);margin-bottom:28px;text-align:left}
+.cdr{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid var(--cr)}
+.cdr:last-child{border-bottom:none}.cdr-l{color:var(--mu)}
+
+/* ══════════════════════════════════════════════════════════
+   ADMIN
+══════════════════════════════════════════════════════════ */
+.adm-wrap{display:flex;min-height:100vh}
+.adm-side{width:258px;background:var(--bd);position:fixed;top:0;left:0;bottom:0;z-index:500;display:flex;flex-direction:column;padding-top:66px}
+.adm-side-in{flex:1;overflow-y:auto;padding:20px 0}
+.adm-logo{padding:0 22px 22px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:8px}
+.adm-logo span{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--bl);letter-spacing:3px}
+.adm-logo small{display:block;font-size:9px;letter-spacing:2.5px;color:rgba(255,255,255,.25);text-transform:uppercase;margin-top:2px}
+.adm-nav-sec{font-size:8.5px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.2);padding:18px 22px 5px}
+.adm-nav-item{display:flex;align-items:center;gap:10px;padding:11px 22px;color:rgba(255,255,255,.42);font-size:11px;letter-spacing:1.8px;text-transform:uppercase;transition:all var(--t);border-left:2px solid transparent;cursor:pointer}
+.adm-nav-item:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.04)}
+.adm-nav-item.on{color:var(--gl);border-left-color:var(--gl);background:rgba(184,145,106,.1)}
+.adm-main{flex:1;margin-left:258px;padding:82px 36px 36px;background:var(--iv);min-height:100vh}
+.adm-pg{display:none}.adm-pg.on{display:block;animation:fadeUp .22s ease}
+.adm-pg-hd{margin-bottom:28px}
+.adm-pg-hd h1{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:300;color:var(--bd)}
+.adm-pg-hd p{color:var(--mu);font-size:13px;margin-top:3px}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(192px,1fr));gap:16px;margin-bottom:30px}
+.stat{background:var(--wh);padding:22px 20px;border-radius:var(--rl);box-shadow:var(--sh)}
+.stat-l{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:8px}
+.stat-v{font-family:'Cormorant Garamond',serif;font-size:40px;color:var(--bd);line-height:1}
+.stat-v span{font-size:17px;color:var(--go)}
+.stat-sub{font-size:11px;color:var(--mu);margin-top:4px;letter-spacing:.5px}
+
+.card{background:var(--wh);border-radius:var(--rl);box-shadow:var(--sh)}
+.card-hd{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--cr)}
+.card-hd h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400}
+.card-bd{padding:22px}
+.mb20{margin-bottom:20px}.mb28{margin-bottom:28px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 14px;font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);border-bottom:1px solid var(--cr);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--cr);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--iv)}
+.td-act{display:flex;gap:6px;flex-wrap:wrap}
+
+/* Schedule */
+.sch-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.sch-day{background:var(--wh);border-radius:var(--rl);padding:14px;box-shadow:var(--sh)}
+.sch-day.cld{opacity:.55}
+.sch-dname{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:10px}
+.tog-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.tog{width:34px;height:18px;background:var(--bl);border-radius:9px;position:relative;cursor:pointer;transition:background var(--t);flex-shrink:0}
+.tog.on{background:var(--go)}
+.tog::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform var(--t)}
+.tog.on::after{transform:translateX(16px)}
+.tog-lbl{font-size:11px;color:var(--mu)}
+.t-range{display:flex;gap:5px;align-items:center}
+.t-range input{padding:5px 8px;font-size:11px}
+.t-range span{color:var(--mu);font-size:11px;flex-shrink:0}
+
+.blk-list{display:flex;flex-wrap:wrap;gap:8px}
+.blk-tag{display:flex;align-items:center;gap:8px;background:var(--cr);padding:6px 13px;border-radius:20px;font-size:12px}
+.blk-tag button{background:none;border:none;color:var(--mu);cursor:pointer;font-size:14px;line-height:1;transition:color var(--t)}
+.blk-tag button:hover{color:var(--re)}
+
+/* Gallery admin */
+.gadm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin-top:14px}
+.gadm-item{border-radius:var(--rl);overflow:hidden;position:relative;background:var(--cr);aspect-ratio:1}
+.gadm-item img{width:100%;height:100%;object-fit:cover}
+.gadm-ov{position:absolute;inset:0;background:rgba(44,26,14,0);transition:.28s;display:flex;align-items:center;justify-content:center}
+.gadm-item:hover .gadm-ov{background:rgba(44,26,14,.58)}
+.gadm-ov button{opacity:0;transition:.2s;border:none;padding:6px 13px;border-radius:var(--r);cursor:pointer;font-size:10.5px;font-family:'DM Sans',sans-serif;letter-spacing:1.5px;text-transform:uppercase;background:var(--re);color:#fff}
+.gadm-item:hover .gadm-ov button{opacity:1}
+.gadm-cat{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.52);color:#fff;font-size:9px;padding:4px 8px;letter-spacing:1.5px;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.upload-zone{border:2px dashed var(--bl);border-radius:var(--rl);padding:36px;text-align:center;cursor:pointer;transition:all var(--t);background:var(--iv)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--go);background:var(--cr)}
+.upload-zone input[type=file]{display:none}
+.upload-ico{font-size:34px;margin-bottom:10px;opacity:.55;display:block}
+
+/* Fbar */
+.fbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.fbar select,.fbar input{max-width:190px}
+.fbar-cnt{font-size:12px;color:var(--mu);margin-left:auto;white-space:nowrap}
+
+/* Info boxes */
+.ib{padding:13px 16px;border-radius:var(--rl);font-size:13px;line-height:1.7;margin-bottom:14px}
+.ib-bl{background:#EFF4FF;border:1px solid #C7D7FD;color:#1e3a8a}
+.ib-am{background:#FFFBEB;border:1px solid #FDE68A;color:#92400e}
+.ib-gr{background:#F0FDF4;border:1px solid #BBF7D0;color:#15803d}
+.ib-re{background:#FEF2F2;border:1px solid #FECACA;color:#991b1b}
+
+/* Detail rows */
+.det-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid var(--cr)}
+.det-row:last-child{border-bottom:none}.det-l{color:var(--mu)}
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media(max-width:980px){
+  .hero{grid-template-columns:1fr;min-height:auto}.hero-r{height:52vw}
+  .book-layout{grid-template-columns:1fr}.bsum{position:static}
+  .sch-grid{grid-template-columns:repeat(2,1fr)}
+  .adm-side{transform:translateX(-258px);transition:transform .3s}
+  .adm-side.open{transform:translateX(0)}.adm-main{margin-left:0}
+  .acc-layout{grid-template-columns:1fr}
+  .pm-grid{grid-template-columns:1fr}.fg2{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .hero-l{padding:48px 28px}.nav-links{gap:18px}.nav-in{padding:0 20px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-in">
+    <div class="logo" onclick="showPage('home')">Belle <em>Heure</em></div>
+    <div class="nav-links">
+      <button class="nav-link" onclick="showPage('home')">Accueil</button>
+      <button class="nav-link" onclick="showPage('gallery')">Galerie</button>
+      <button class="nav-link" onclick="startBooking()">Réserver</button>
+      <button class="nav-link" onclick="showAdminOrLogin()">Admin</button>
+    </div>
+    <div class="nav-r" id="nav-r"></div>
+  </div>
+</nav>
+
+<div id="toast-wrap"></div>
+<div class="modal-bg hidden" id="modal-bg">
+  <div class="modal" id="modal">
+    <div class="modal-hd"><h3 id="mdl-ttl"></h3><button class="modal-x" onclick="closeModal()">✕</button></div>
+    <div class="modal-bd" id="mdl-bd"></div>
+    <div class="modal-ft" id="mdl-ft"></div>
+  </div>
+</div>
+<div class="lb hidden" id="lb">
+  <button class="lb-close" onclick="lbClose()">✕</button>
+  <button class="lb-nav lb-prev" onclick="lbNav(-1)">‹</button>
+  <img id="lb-img" src="" alt="">
+  <p class="lb-cap" id="lb-cap"></p>
+  <button class="lb-nav lb-next" onclick="lbNav(1)">›</button>
+  <div class="lb-count" id="lb-cnt"></div>
+</div>
+
+<!-- ══════════════════ HOME ══════════════════ -->
+<div class="page on" id="page-home">
+  <div class="hero">
+    <div class="hero-l">
+      <div class="hero-eyebrow">Institut de beauté · Paris</div>
+      <h1 class="hero-h1">L'art de<br>prendre soin<br>de <em>soi</em></h1>
+      <p class="hero-sub">Réservez vos soins en ligne, choisissez votre créneau et payez en toute sécurité via Stripe ou directement sur place.</p>
+      <div class="hero-cta">
+        <button class="btn btn-gold" onclick="startBooking()">Prendre rendez-vous</button>
+        <button class="btn btn-outline" onclick="showPage('gallery')">Voir la galerie</button>
+      </div>
+    </div>
+    <div class="hero-r">
+      <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&q=80" alt="Soin beauté">
+      <div class="hero-badge">
+        <div class="hb-lbl">Belle Heure</div>
+        <div class="hb-stats">
+          <div><span class="hbs-n" id="stat-svcs">6</span><div class="hbs-l">Soins</div></div>
+          <div><span class="hbs-n">5★</span><div class="hbs-l">Avis</div></div>
+          <div><span class="hbs-n">100%</span><div class="hbs-l">Satisfaits</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <section class="section" id="home-svcs-sec">
+    <div class="section-inner">
+      <div class="sec-hd">
+        <p class="sec-ey">Nos prestations</p>
+        <h2 class="sec-h2">Soins & Beauté</h2>
+      </div>
+      <div class="svcs-grid" id="home-svcs"></div>
+    </div>
+  </section>
+  <section class="section" style="background:var(--cr)">
+    <div class="section-inner" style="max-width:760px;text-align:center">
+      <p class="sec-ey">Réservation en ligne</p>
+      <h2 class="sec-h2" style="margin-bottom:16px">Simple, rapide, sécurisé</h2>
+      <p style="color:var(--mu);font-size:15px;margin-bottom:52px">Soin, créneau, paiement Stripe ou sur place — en moins de 2 minutes.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-bottom:44px">
+        <div><div style="font-size:38px;margin-bottom:14px">🗓</div><h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:6px">Choisissez</h3><p style="font-size:13px;color:var(--mu)">Votre soin & votre créneau disponible</p></div>
+        <div><div style="font-size:38px;margin-bottom:14px">✍️</div><h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:6px">Renseignez</h3><p style="font-size:13px;color:var(--mu)">Vos coordonnées en quelques secondes</p></div>
+        <div><div style="font-size:38px;margin-bottom:14px">💳</div><h3 style="font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:6px">Payez</h3><p style="font-size:13px;color:var(--mu)">Via Stripe ou directement sur place</p></div>
+      </div>
+      <button class="btn btn-gold" onclick="startBooking()">Réserver maintenant</button>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════ GALLERY ══════════════════ -->
+<div class="page" id="page-gallery">
+  <div class="gal-hero">
+    <div class="gal-hero-inner">
+      <h1>Notre Galerie</h1>
+      <p>Découvrez nos réalisations & l'univers de l'institut</p>
+    </div>
+  </div>
+  <div class="gal-filters">
+    <button class="gf on" onclick="filterGal('all',this)">Tous</button>
+    <button class="gf" onclick="filterGal('visage',this)">Visage</button>
+    <button class="gf" onclick="filterGal('mains',this)">Mains & Pieds</button>
+    <button class="gf" onclick="filterGal('corps',this)">Corps</button>
+    <button class="gf" onclick="filterGal('maquillage',this)">Maquillage</button>
+    <button class="gf" onclick="filterGal('ambiance',this)">Ambiance</button>
+  </div>
+  <div class="gal-masonry" id="gal-grid"></div>
+  <div id="gal-empty" class="gal-empty hidden"><span class="ico">🌸</span><p>Aucune photo dans cette catégorie</p></div>
+</div>
+
+<!-- ══════════════════ AUTH ══════════════════ -->
+<div class="page" id="page-auth">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <div class="auth-tab on" id="tab-login" onclick="switchTab('login')">Connexion</div>
+        <div class="auth-tab" id="tab-register" onclick="switchTab('register')">Inscription</div>
+      </div>
+      <div class="auth-body" id="form-login">
+        <h2>Bon retour</h2>
+        <p class="sub">Gérez vos rendez-vous depuis votre espace personnel</p>
+        <div class="fg"><label>Email *</label><input type="email" id="l-em" placeholder="marie@example.com"></div>
+        <div class="fg"><label>Mot de passe *</label><input type="password" id="l-pw" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn btn-gold" style="width:100%;margin-bottom:12px" onclick="doLogin()">Se connecter</button>
+        <button class="btn btn-ghost" style="width:100%" onclick="switchTab('register')">Créer un compte →</button>
+      </div>
+      <div class="auth-body hidden" id="form-register">
+        <h2>Créer un compte</h2>
+        <p class="sub">Pour accéder à votre historique de réservations</p>
+        <div class="fg2">
+          <div class="fg"><label>Prénom *</label><input type="text" id="r-fn" placeholder="Marie"></div>
+          <div class="fg"><label>Nom *</label><input type="text" id="r-ln" placeholder="Dupont"></div>
+        </div>
+        <div class="fg"><label>Email *</label><input type="email" id="r-em" placeholder="marie@example.com"></div>
+        <div class="fg"><label>Téléphone</label><input type="tel" id="r-ph" placeholder="06 12 34 56 78"></div>
+        <div class="fg"><label>Mot de passe * (min. 6 caractères)</label><input type="password" id="r-pw" placeholder="••••••••"></div>
+        <button class="btn btn-gold" style="width:100%;margin-bottom:12px" onclick="doRegister()">Créer mon compte</button>
+        <button class="btn btn-ghost" style="width:100%" onclick="switchTab('login')">← Déjà un compte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ ACCOUNT ══════════════════ -->
+<div class="page" id="page-account">
+  <div class="acc-wrap">
+    <div class="acc-hd">
+      <h1 id="acc-title">Mon compte</h1>
+      <p id="acc-email"></p>
+    </div>
+    <div class="acc-layout">
+      <div class="acc-nav">
+        <div class="acc-nav-item on" id="an-rdv" onclick="showAccSec('rdv')">📋 Mes rendez-vous</div>
+        <div class="acc-nav-item" id="an-profile" onclick="showAccSec('profile')">👤 Mon profil</div>
+        <div class="acc-nav-item" style="color:var(--re)" onclick="doLogout()">🚪 Déconnexion</div>
+      </div>
+      <div>
+        <div class="acc-sec on" id="as-rdv">
+          <div class="card">
+            <div class="card-hd"><h2>Mes rendez-vous</h2><button class="btn btn-gold btn-sm" onclick="startBooking()">+ Nouveau</button></div>
+            <div class="card-bd" style="padding:0"><div class="tw"><table>
+              <thead><tr><th>Date</th><th>Heure</th><th>Soin</th><th>Paiement</th><th>Statut</th><th>Action</th></tr></thead>
+              <tbody id="my-rdv"></tbody>
+            </table></div></div>
+          </div>
+        </div>
+        <div class="acc-sec" id="as-profile">
+          <div class="card mb28">
+            <div class="card-hd"><h2>Mes informations</h2></div>
+            <div class="card-bd">
+              <div class="fg2">
+                <div class="fg"><label>Prénom</label><input type="text" id="p-fn"></div>
+                <div class="fg"><label>Nom</label><input type="text" id="p-ln"></div>
+              </div>
+              <div class="fg"><label>Téléphone</label><input type="tel" id="p-ph"></div>
+              <button class="btn btn-gold btn-sm" onclick="saveProfile()">Enregistrer</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><h2>Changer le mot de passe</h2></div>
+            <div class="card-bd">
+              <div class="fg"><label>Nouveau mot de passe</label><input type="password" id="p-newpw" placeholder="Minimum 6 caractères"></div>
+              <button class="btn btn-outline btn-sm" onclick="changePw()">Mettre à jour</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ BOOKING ══════════════════ -->
+<div class="page" id="page-booking">
+  <div class="book-wrap">
+    <div class="book-hd"><h1>Réservation</h1><p>Choisissez votre soin, votre créneau et votre mode de paiement</p></div>
+    <div class="steps">
+      <div class="step on" data-s="1"><div class="step-n">1</div><span class="step-lbl">Soin & créneau</span></div>
+      <div class="step-div"></div>
+      <div class="step" data-s="2"><div class="step-n">2</div><span class="step-lbl">Vos infos</span></div>
+      <div class="step-div"></div>
+      <div class="step" data-s="3"><div class="step-n">3</div><span class="step-lbl">Paiement</span></div>
+    </div>
+    <div class="book-layout">
+      <div>
+        <!-- STEP 1 -->
+        <div class="bstep on" id="bs-1">
+          <h2>Choisissez votre soin</h2>
+          <div class="sp-grid" id="sp-grid"></div>
+          <h2 style="margin-top:38px">Choisissez une date</h2>
+          <div class="cal" id="book-cal" style="margin-top:18px"></div>
+          <div class="cal-legend" style="margin-top:12px">
+            <div class="cal-leg"><div class="cal-leg-dot" style="background:var(--go)"></div>Sélectionné</div>
+            <div class="cal-leg"><div class="cal-leg-dot" style="background:var(--cr);border:1px solid var(--bl)"></div>Disponible</div>
+            <div class="cal-leg"><div class="cal-leg-dot" style="background:var(--bl);opacity:.35"></div>Indisponible</div>
+          </div>
+          <div id="slots-sec" class="hidden">
+            <h2 style="margin-top:38px">Créneaux — <span id="slots-lbl" style="color:var(--go)"></span></h2>
+            <div class="slots-grid" id="slots-grid" style="margin-top:16px"></div>
+          </div>
+          <div style="margin-top:32px"><button class="btn btn-gold" onclick="goStep(2)">Continuer →</button></div>
+        </div>
+        <!-- STEP 2 -->
+        <div class="bstep" id="bs-2">
+          <h2>Vos coordonnées</h2>
+          <div id="b-prefill" class="ib ib-gr hidden">✓ Vos coordonnées ont été pré-remplies depuis votre compte.</div>
+          <div class="fg2">
+            <div class="fg"><label>Prénom *</label><input type="text" id="b-fn"></div>
+            <div class="fg"><label>Nom *</label><input type="text" id="b-ln"></div>
+          </div>
+          <div class="fg"><label>Email *</label><input type="email" id="b-em"></div>
+          <div class="fg"><label>Téléphone *</label><input type="tel" id="b-ph"></div>
+          <div class="fg"><label>Notes (optionnel)</label><textarea id="b-notes" rows="3" placeholder="Allergies, préférences..."></textarea></div>
+          <div style="display:flex;gap:12px;margin-top:8px">
+            <button class="btn btn-ghost" onclick="goStep(1)">← Retour</button>
+            <button class="btn btn-gold" onclick="goStep(3)">Continuer →</button>
+          </div>
+        </div>
+        <!-- STEP 3 -->
+        <div class="bstep" id="bs-3">
+          <h2>Mode de paiement</h2>
+          <div class="pm-grid">
+            <div class="pm-card on" id="pm-stripe" onclick="selPm('stripe')">
+              <div class="pm-ico">💳</div>
+              <div class="pm-title">Payer en ligne</div>
+              <div class="pm-sub">Carte bancaire · paiement immédiat</div>
+              <div class="pm-badge">Stripe SSL</div>
+            </div>
+            <div class="pm-card" id="pm-onsite" onclick="selPm('on_site')">
+              <div class="pm-ico">🏠</div>
+              <div class="pm-title">Payer sur place</div>
+              <div class="pm-sub">Espèces, CB ou chèque à l'arrivée</div>
+            </div>
+          </div>
+          <div id="stripe-sec">
+            <div id="stripe-demo" class="ib ib-am">⚙️ Mode démo — Carte test : <strong>4242 4242 4242 4242</strong> · exp 12/27 · CVC 123</div>
+            <div class="fg"><label>Coordonnées bancaires</label><div id="card-element"></div><div id="card-errors"></div></div>
+            <div class="stripe-lock"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Paiement 100% sécurisé par Stripe</div>
+          </div>
+          <div id="onsite-sec" class="hidden">
+            <div class="ib ib-gr">✓ Votre rendez-vous est confirmé immédiatement. Réglez directement à l'institut le jour J (espèces, CB, chèque).</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:24px">
+            <button class="btn btn-ghost" onclick="goStep(2)">← Retour</button>
+            <button class="btn btn-gold" id="pay-btn" onclick="processPay()"><span id="pay-btn-txt">Confirmer</span></button>
+          </div>
+        </div>
+      </div>
+      <!-- SUMMARY -->
+      <div>
+        <div class="bsum">
+          <div class="bsum-title">Récapitulatif</div>
+          <div id="bsum-content"><p class="bsum-empty">Sélectionnez un soin<br>pour voir le récapitulatif</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ CONFIRMATION ══════════════════ -->
+<div class="page" id="page-conf">
+  <div class="conf">
+    <div class="conf-ico ok" id="conf-ico">✓</div>
+    <h2 id="conf-title">Réservation confirmée !</h2>
+    <p id="conf-sub">Votre rendez-vous est enregistré. À bientôt chez Belle Heure !</p>
+    <div class="conf-det" id="conf-det"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="showPage('home')">Accueil</button>
+      <button class="btn btn-outline" id="conf-rdv" onclick="goToMyRdv()">Mes rendez-vous</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ ADMIN LOGIN ══════════════════ -->
+<div class="page" id="page-admin-login">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-body">
+        <h2>Administration</h2>
+        <p class="sub">Connexion avec votre compte Supabase (rôle admin)</p>
+        <div class="ib ib-am" style="margin-bottom:20px">Inscrivez-vous sur le site, puis exécutez <code>UPDATE profiles SET role='admin'</code> dans Supabase pour obtenir les droits admin.</div>
+        <div class="fg"><label>Email</label><input type="email" id="adm-em" placeholder="admin@belleheure.fr"></div>
+        <div class="fg"><label>Mot de passe</label><input type="password" id="adm-pw" placeholder="••••••••" onkeypress="if(event.key==='Enter')doAdmLogin()"></div>
+        <button class="btn btn-dark" style="width:100%" onclick="doAdmLogin()">Accéder à l'administration</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ ADMIN ══════════════════ -->
+<div class="page" id="page-admin">
+  <div class="adm-wrap">
+    <div class="adm-side">
+      <div class="adm-side-in">
+        <div class="adm-logo"><span>Belle Heure</span><small>Administration</small></div>
+        <p class="adm-nav-sec">Principal</p>
+        <div class="adm-nav-item on" id="an-dashboard" onclick="showAdmPg('dashboard')">📊 Tableau de bord</div>
+        <div class="adm-nav-item" id="an-appointments" onclick="showAdmPg('appointments')">📋 Rendez-vous</div>
+        <p class="adm-nav-sec">Contenu</p>
+        <div class="adm-nav-item" id="an-gallery" onclick="showAdmPg('gallery')">🖼 Galerie</div>
+        <div class="adm-nav-item" id="an-services" onclick="showAdmPg('services')">💄 Soins</div>
+        <p class="adm-nav-sec">Configuration</p>
+        <div class="adm-nav-item" id="an-schedule" onclick="showAdmPg('schedule')">🗓 Planning</div>
+        <div class="adm-nav-item" id="an-users" onclick="showAdmPg('users')">👥 Utilisateurs</div>
+        <div class="adm-nav-item" id="an-settings" onclick="showAdmPg('settings')">⚙️ Paramètres</div>
+        <p class="adm-nav-sec">Session</p>
+        <div class="adm-nav-item" onclick="admLogout()" style="color:rgba(255,255,255,.35)">🚪 Déconnexion</div>
+      </div>
+    </div>
+    <div class="adm-main">
+
+      <!-- Dashboard -->
+      <div class="adm-pg on" id="adm-dashboard">
+        <div class="adm-pg-hd"><h1>Tableau de bord</h1><p>Vue d'ensemble de l'activité</p></div>
+        <div class="stats-row" id="adm-stats"></div>
+        <div class="card">
+          <div class="card-hd"><h2>Prochains rendez-vous</h2><button class="btn btn-outline btn-sm" onclick="showAdmPg('appointments')">Voir tout</button></div>
+          <div class="card-bd" style="padding:0"><div class="tw"><table>
+            <thead><tr><th>Date</th><th>Heure</th><th>Client</th><th>Soin</th><th>Paiement</th><th>Statut</th></tr></thead>
+            <tbody id="dash-tbody"></tbody>
+          </table></div></div>
+        </div>
+      </div>
+
+      <!-- Appointments -->
+      <div class="adm-pg" id="adm-appointments">
+        <div class="adm-pg-hd"><h1>Rendez-vous</h1><p>Gérez tous les rendez-vous</p></div>
+        <div class="fbar">
+          <select id="f-st" onchange="renderAdmApts()"><option value="">Tous statuts</option><option value="pending">En attente</option><option value="confirmed">Confirmé</option><option value="completed">Terminé</option><option value="cancelled">Annulé</option></select>
+          <input type="date" id="f-dt" onchange="renderAdmApts()" style="max-width:175px">
+          <input type="text" id="f-q" placeholder="Rechercher…" oninput="renderAdmApts()" style="max-width:200px">
+          <span class="fbar-cnt" id="f-cnt"></span>
+        </div>
+        <div class="card"><div class="card-bd" style="padding:0"><div class="tw"><table>
+          <thead><tr><th>Réf.</th><th>Date</th><th>H.</th><th>Client</th><th>Soin</th><th>Prix</th><th>Pmt</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="apts-tbody"></tbody>
+        </table></div></div></div>
+      </div>
+
+      <!-- Gallery Admin -->
+      <div class="adm-pg" id="adm-gallery">
+        <div class="adm-pg-hd"><h1>Galerie</h1><p>Photos stockées dans Supabase Storage (bucket "gallery")</p></div>
+        <div class="card mb28">
+          <div class="card-hd"><h2>Ajouter des photos</h2></div>
+          <div class="card-bd">
+            <div class="fg2">
+              <div class="fg"><label>Catégorie</label>
+                <select id="g-cat"><option value="general">Général</option><option value="visage">Visage</option><option value="mains">Mains & Pieds</option><option value="corps">Corps</option><option value="maquillage">Maquillage</option><option value="ambiance">Ambiance</option></select>
+              </div>
+              <div class="fg"><label>Légende</label><input type="text" id="g-cap" placeholder="Description…"></div>
+            </div>
+            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('g-file').click()">
+              <input type="file" id="g-file" accept="image/*" multiple onchange="handleUpload(this.files)">
+              <span class="upload-ico">📸</span>
+              <p style="font-size:14px;margin-bottom:6px">Glissez vos photos ou <strong style="color:var(--go)">cliquez pour sélectionner</strong></p>
+              <p style="font-size:11px;color:var(--mu)">JPG, PNG, WebP · Max 8 MB · Stockées dans Supabase Storage</p>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+              <div class="fg" style="flex:1;margin:0;min-width:200px"><label>Ou coller une URL</label><input type="url" id="g-url" placeholder="https://…"></div>
+              <button class="btn btn-ghost btn-sm" onclick="addGalUrl()">Ajouter l'URL</button>
+            </div>
+            <div class="ib ib-bl" style="margin-top:14px">ℹ️ Créez le bucket <strong>gallery</strong> en mode <strong>Public</strong> dans Supabase Storage avant d'uploader des fichiers.</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h2>Photos publiées</h2><span class="tag tm" id="g-cnt">0 photos</span></div>
+          <div class="card-bd"><div class="gadm-grid" id="gadm-grid"></div></div>
+        </div>
+      </div>
+
+      <!-- Services -->
+      <div class="adm-pg" id="adm-services">
+        <div class="adm-pg-hd"><h1>Soins & Prestations</h1></div>
+        <div class="card">
+          <div class="card-hd"><h2>Liste des soins</h2><button class="btn btn-gold btn-sm" onclick="openSvcModal()">+ Ajouter</button></div>
+          <div class="card-bd" style="padding:0"><div class="tw"><table>
+            <thead><tr><th>Icône</th><th>Nom</th><th>Description</th><th>Durée</th><th>Prix</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="svcs-tbody"></tbody>
+          </table></div></div>
+        </div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="adm-pg" id="adm-schedule">
+        <div class="adm-pg-hd"><h1>Planning</h1><p>Horaires d'ouverture, durée des créneaux et jours bloqués</p></div>
+        <div class="card mb28">
+          <div class="card-hd"><h2>Horaires par jour</h2></div>
+          <div class="card-bd">
+            <div class="sch-grid" id="sch-grid"></div>
+            <div style="display:flex;gap:16px;margin-top:20px;flex-wrap:wrap;align-items:flex-end">
+              <div class="fg" style="margin:0"><label>Durée des créneaux</label>
+                <select id="slot-dur" style="max-width:175px"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select>
+              </div>
+              <button class="btn btn-gold btn-sm" onclick="saveSchedule()">💾 Enregistrer le planning</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h2>Jours bloqués</h2>
+            <div style="display:flex;gap:10px">
+              <input type="date" id="blk-dt" style="max-width:170px;padding:8px 12px">
+              <button class="btn btn-gold btn-sm" onclick="addBlkDate()">Bloquer ce jour</button>
+            </div>
+          </div>
+          <div class="card-bd"><div class="blk-list" id="blk-list"></div></div>
+        </div>
+      </div>
+
+      <!-- Users -->
+      <div class="adm-pg" id="adm-users">
+        <div class="adm-pg-hd"><h1>Utilisateurs</h1><p>Comptes clients — authentification via Supabase Auth</p></div>
+        <div class="card"><div class="card-bd" style="padding:0"><div class="tw"><table>
+          <thead><tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Rôle</th><th>Inscrit le</th><th>RDV</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody"></tbody>
+        </table></div></div></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="adm-pg" id="adm-settings">
+        <div class="adm-pg-hd"><h1>Paramètres</h1></div>
+        <div class="card mb28">
+          <div class="card-hd"><h2>🔗 Intégrations</h2></div>
+          <div class="card-bd" id="int-status">
+            <div class="ib ib-bl">Vérification des connexions…</div>
+          </div>
+        </div>
+        <div class="card mb28">
+          <div class="card-hd"><h2>Institut</h2></div>
+          <div class="card-bd">
+            <div class="fg2">
+              <div class="fg"><label>Nom de l'institut</label><input type="text" id="s-name"></div>
+              <div class="fg"><label>Email de contact</label><input type="email" id="s-email"></div>
+            </div>
+            <div class="fg2">
+              <div class="fg"><label>Téléphone</label><input type="tel" id="s-phone"></div>
+              <div class="fg"><label>Adresse</label><input type="text" id="s-address"></div>
+            </div>
+            <button class="btn btn-gold" onclick="saveSettings()">Enregistrer</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h2>Configuration .env</h2></div>
+          <div class="card-bd">
+            <div class="ib ib-bl" style="font-family:monospace;font-size:12px;line-height:2">
+              <strong>Variables d'environnement requises :</strong><br>
+              SUPABASE_URL · SUPABASE_ANON_KEY · SUPABASE_SERVICE_ROLE_KEY<br>
+              STRIPE_SECRET_KEY · STRIPE_PUBLISHABLE_KEY · STRIPE_WEBHOOK_SECRET<br>
+              ADMIN_SECRET · PORT · NODE_ENV
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────
+   STATE
+───────────────────────────────────────────── */
+const API = '';   // vide = même origine
+let SB = null;    // Supabase client frontend
+let HEALTH = {};  // réponse /api/health
+let admToken = null;
+let galItems = [], galCat = 'all', lbIdx = 0;
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
+let BK = { svcId:null, date:null, slot:null, pm:'stripe', step:1 };
+let stripeObj = null, cardEl = null, stripeReady = false;
+let svcCache = [];
+
+/* ─────────────────────────────────────────────
+   BOOT
+───────────────────────────────────────────── */
+(async () => {
+  HEALTH = await fetch(API+'/api/health').then(r=>r.json()).catch(()=>({}));
+  // Init Supabase JS côté client (pour auth)
+  if (window.supabase && HEALTH.supabase_url && HEALTH.supabase_anon) {
+    SB = window.supabase.createClient(HEALTH.supabase_url, HEALTH.supabase_anon);
+    // Restaure session si stockée
+    const { data } = await SB.auth.getSession();
+    if (data?.session) {
+      const { data: p } = await SB.from('profiles').select('*').eq('id', data.session.user.id).single();
+      setUser({ token: data.session.access_token, user: { ...p, email: data.session.user.email, id: data.session.user.id } });
+    }
+  }
+  renderNavR();
+  renderHome();
+})();
+
+/* ─────────────────────────────────────────────
+   API HELPER
+───────────────────────────────────────────── */
+async function api(method, path, body, opts={}) {
+  const h = { 'Content-Type':'application/json' };
+  const u = getUser();
+  if (u?.token)    h['Authorization']  = 'Bearer ' + u.token;
+  if (admToken)    h['Authorization']  = 'Bearer ' + admToken;
+  if (opts.admin)  h['X-Admin-Secret'] = LS.g('adm_secret','change_me_in_production_32chars');
+  try {
+    const r = await fetch(API+path, { method, headers:h, body:body?JSON.stringify(body):undefined });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Erreur serveur');
+    return d;
+  } catch(e) {
+    if(e.message==='Failed to fetch') throw new Error('offline');
+    throw e;
+  }
+}
+
+async function apiUpload(path, fd, opts={}) {
+  const h = {};
+  const u = getUser();
+  if (u?.token)   h['Authorization']  = 'Bearer ' + u.token;
+  if (admToken)   h['Authorization']  = 'Bearer ' + admToken;
+  if (opts.admin) h['X-Admin-Secret'] = LS.g('adm_secret','change_me_in_production_32chars');
+  const r = await fetch(API+path, { method:'POST', headers:h, body:fd });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error||'Erreur upload');
+  return d;
+}
+
+/* ─────────────────────────────────────────────
+   LOCAL STORAGE
+───────────────────────────────────────────── */
+const LS = {
+  g:(k,d)=>{try{const v=localStorage.getItem('bh_'+k);return v?JSON.parse(v):d}catch{return d}},
+  s:(k,v)=>localStorage.setItem('bh_'+k,JSON.stringify(v)),
+  r:(k)=>localStorage.removeItem('bh_'+k),
+};
+
+function getUser(){ return LS.g('session',null); }
+function setUser(u){ LS.s('session',u); }
+function clearUser(){ LS.r('session'); }
+
+/* ─────────────────────────────────────────────
+   NAV
+───────────────────────────────────────────── */
+function renderNavR() {
+  const el = document.getElementById('nav-r');
+  const u  = getUser();
+  if (u?.user) {
+    const ini = ((u.user.first_name||'?')[0]+(u.user.last_name||'?')[0]).toUpperCase();
+    el.innerHTML = `
+      <div class="ava" onclick="toggleDrop()" id="nav-ava">${ini}</div>
+      <div class="drop hidden" id="nav-drop">
+        <a onclick="goToMyRdv();closeDrop()">📋 Mes rendez-vous</a>
+        <a onclick="goToProfile();closeDrop()">👤 Mon profil</a>
+        <div class="drop-sep"></div>
+        <a onclick="doLogout()" style="color:var(--re)">🚪 Déconnexion</a>
+      </div>`;
+  } else {
+    el.innerHTML = `<button class="btn btn-outline btn-sm" onclick="showPage('auth')">Se connecter</button>`;
+  }
+}
+function toggleDrop(){ document.getElementById('nav-drop')?.classList.toggle('hidden'); }
+function closeDrop(){ document.getElementById('nav-drop')?.classList.add('hidden'); }
+document.addEventListener('click', e=>{ if(!e.target.closest('#nav-r')) closeDrop(); });
+
+/* ─────────────────────────────────────────────
+   AUTH
+───────────────────────────────────────────── */
+function switchTab(t) {
+  document.getElementById('tab-login').classList.toggle('on', t==='login');
+  document.getElementById('tab-register').classList.toggle('on', t==='register');
+  document.getElementById('form-login').classList.toggle('hidden', t!=='login');
+  document.getElementById('form-register').classList.toggle('hidden', t!=='register');
+}
+
+async function doLogin() {
+  const email = document.getElementById('l-em').value.trim();
+  const pw    = document.getElementById('l-pw').value;
+  if (!email||!pw){ toast('Email et mot de passe requis','err'); return; }
+  try {
+    let data;
+    if (SB) {
+      const res = await SB.auth.signInWithPassword({ email, password:pw });
+      if (res.error) throw new Error(res.error.message);
+      const { data:p } = await SB.from('profiles').select('*').eq('id',res.data.user.id).single();
+      data = { token:res.data.session.access_token, user:{...p, email:res.data.user.email, id:res.data.user.id} };
+    } else {
+      // Mode démo localStorage
+      const users = LS.g('demo_users',[]);
+      const u = users.find(u=>u.email===email&&u._pw===pw);
+      if (!u) throw new Error('Email ou mot de passe incorrect');
+      data = { token:'demo', user:u };
+    }
+    setUser(data);
+    renderNavR();
+    toast(`Bienvenue ${data.user.first_name||data.user.email} !`,'ok');
+    goToMyRdv();
+  } catch(e){ toast(e.message,'err'); }
+}
+
+async function doRegister() {
+  const fn=document.getElementById('r-fn').value.trim(), ln=document.getElementById('r-ln').value.trim();
+  const em=document.getElementById('r-em').value.trim(), ph=document.getElementById('r-ph').value.trim();
+  const pw=document.getElementById('r-pw').value;
+  if (!fn||!ln||!em||!pw){ toast('Champs obligatoires manquants','err'); return; }
+  if (pw.length<6){ toast('Mot de passe trop court (min. 6 caractères)','err'); return; }
+  try {
+    let data;
+    if (SB) {
+      const res = await SB.auth.signUp({ email:em, password:pw, options:{ data:{ first_name:fn, last_name:ln, phone:ph } } });
+      if (res.error) throw new Error(res.error.message);
+      // Attendre quelques ms pour que le trigger Supabase crée le profil
+      await new Promise(r=>setTimeout(r,600));
+      const { data:p } = await SB.from('profiles').select('*').eq('id',res.data.user.id).single();
+      const token = res.data.session?.access_token;
+      data = { token, user:{...p, email:em, id:res.data.user.id} };
+    } else {
+      const users = LS.g('demo_users',[]);
+      if (users.find(u=>u.email===em)) throw new Error('Email déjà utilisé');
+      const u={ id:'u'+Date.now(), first_name:fn, last_name:ln, email:em, phone:ph, role:'user', _pw:pw, created_at:new Date().toISOString() };
+      users.push(u); LS.s('demo_users',users);
+      data = { token:'demo', user:u };
+    }
+    setUser(data);
+    renderNavR();
+    toast(`Compte créé ! Bienvenue ${fn} 🎉`,'ok');
+    goToMyRdv();
+  } catch(e){ toast(e.message,'err'); }
+}
+
+function doLogout() {
+  if (SB) SB.auth.signOut();
+  clearUser();
+  renderNavR();
+  showPage('home');
+  toast('Déconnecté');
+}
+
+/* ─────────────────────────────────────────────
+   ACCOUNT
+───────────────────────────────────────────── */
+function goToMyRdv()   { const u=getUser(); if(!u){ showPage('auth');return; } openAcc('rdv'); }
+function goToProfile() { const u=getUser(); if(!u){ showPage('auth');return; } openAcc('profile'); }
+
+function openAcc(sec) {
+  const u = getUser(); if(!u){ showPage('auth');return; }
+  showPage('account');
+  document.getElementById('acc-title').textContent = `Bonjour, ${u.user.first_name||u.user.email} !`;
+  document.getElementById('acc-email').textContent = u.user.email||'';
+  document.getElementById('p-fn').value = u.user.first_name||'';
+  document.getElementById('p-ln').value = u.user.last_name||'';
+  document.getElementById('p-ph').value = u.user.phone||'';
+  showAccSec(sec);
+  loadMyRdv();
+}
+
+function showAccSec(id) {
+  document.querySelectorAll('.acc-sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.acc-nav-item').forEach(a=>a.classList.remove('on'));
+  document.getElementById('as-'+id)?.classList.add('on');
+  document.getElementById('an-'+id)?.classList.add('on');
+}
+
+async function loadMyRdv() {
+  let apts=[];
+  try{ apts = await api('GET','/api/appointments/mine'); }
+  catch{ apts = LS.g('demo_apts',[]).filter(a=>a.user_id===getUser()?.user?.id).sort((a,b)=>b.appointment_date.localeCompare(a.appointment_date)); }
+  const tb = document.getElementById('my-rdv');
+  tb.innerHTML = apts.length ? apts.map(a=>`
+    <tr>
+      <td>${fdt(a.appointment_date)}</td>
+      <td><strong>${sliceTime(a.appointment_slot)}</strong></td>
+      <td>${a.service_icon} ${a.service_name}</td>
+      <td><span class="tag ${a.payment_method==='on_site'?'tb':'to'}">${a.payment_method==='on_site'?'Sur place':'Carte'}</span></td>
+      <td><span class="tag ${stag(a.status)}">${slbl(a.status)}</span></td>
+      <td>${a.status!=='cancelled'?`<button class="btn btn-red btn-sm" onclick="cancelMyRdv('${a.id}')">Annuler</button>`:'—'}</td>
+    </tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:32px">Aucun rendez-vous — <a style="color:var(--go);cursor:pointer" onclick="startBooking()">Réserver →</a></td></tr>';
+}
+
+async function cancelMyRdv(id) {
+  if(!confirm('Annuler ce rendez-vous ?')) return;
+  try{ await api('DELETE',`/api/appointments/${id}`); }
+  catch{ const a=LS.g('demo_apts',[]); const i=a.findIndex(x=>x.id===id); if(i>=0){a[i].status='cancelled';LS.s('demo_apts',a);} }
+  toast('Rendez-vous annulé'); loadMyRdv();
+}
+
+async function saveProfile() {
+  const u=getUser(); if(!u) return;
+  const body={first_name:document.getElementById('p-fn').value.trim(),last_name:document.getElementById('p-ln').value.trim(),phone:document.getElementById('p-ph').value.trim()};
+  try{
+    if(SB){ const {data}=await SB.from('profiles').update(body).eq('id',u.user.id).select().single(); setUser({...u,user:{...u.user,...data}}); }
+    else setUser({...u,user:{...u.user,...body}});
+    renderNavR(); toast('Profil mis à jour','ok');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+async function changePw() {
+  const pw=document.getElementById('p-newpw').value;
+  if(!pw||pw.length<6){ toast('Mot de passe trop court','err'); return; }
+  try{
+    if(SB) await SB.auth.updateUser({password:pw});
+    document.getElementById('p-newpw').value='';
+    toast('Mot de passe mis à jour','ok');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+/* ─────────────────────────────────────────────
+   GALLERY — PUBLIC
+───────────────────────────────────────────── */
+async function loadGallery() {
+  try{ galItems = await api('GET','/api/gallery'); }
+  catch{ galItems = LS.g('demo_gal', demogal()); }
+  renderGal(galCat);
+}
+
+function demogal(){ return [
+  {id:'g1',public_url:'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=700&q=80',caption:'Soin éclat visage',category:'visage',created_at:'2024-01-01'},
+  {id:'g2',public_url:'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=700&q=80',caption:'Manucure délicate',category:'mains',created_at:'2024-01-02'},
+  {id:'g3',public_url:'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=700&q=80',caption:'Soin hydratant',category:'visage',created_at:'2024-01-03'},
+  {id:'g4',public_url:'https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=700&q=80',caption:'Maquillage naturel',category:'maquillage',created_at:'2024-01-04'},
+  {id:'g5',public_url:'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=700&q=80',caption:'Ambiance institut',category:'ambiance',created_at:'2024-01-05'},
+  {id:'g6',public_url:'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=700&q=80',caption:'Pédicure soin',category:'mains',created_at:'2024-01-06'},
+  {id:'g7',public_url:'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=700&q=80',caption:'Soin corps',category:'corps',created_at:'2024-01-07'},
+];}
+
+const catLbl = c=>({visage:'Visage',mains:'Mains & Pieds',corps:'Corps',maquillage:'Maquillage',ambiance:'Ambiance',general:'Général'}[c]||c);
+
+function renderGal(cat) {
+  galCat=cat;
+  const items = cat==='all' ? galItems : galItems.filter(g=>g.category===cat);
+  const grid=document.getElementById('gal-grid'), empty=document.getElementById('gal-empty');
+  const isAdm = !!admToken;
+  if(!items.length){ grid.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  grid.innerHTML = items.map(it=>`
+    <div class="gal-item" onclick="lbOpen(${galItems.indexOf(it)})">
+      <img src="${it.public_url}" alt="${it.caption||''}" loading="lazy">
+      <div class="gal-ov">
+        <div class="gal-cap">
+          ${it.caption?`<div class="gal-cap-t">${it.caption}</div>`:''}
+          <div class="gal-cap-c">${catLbl(it.category)}</div>
+        </div>
+        ${isAdm?`<button class="gal-del" onclick="event.stopPropagation();delGalItem('${it.id}')">✕</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function filterGal(cat,btn) { document.querySelectorAll('.gf').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); renderGal(cat); }
+
+// Lightbox
+function lbOpen(i){ lbIdx=i; lbUpd(); document.getElementById('lb').classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function lbClose(){ document.getElementById('lb').classList.add('hidden'); document.body.style.overflow=''; }
+function lbNav(d){ lbIdx=(lbIdx+d+galItems.length)%galItems.length; lbUpd(); }
+function lbUpd(){
+  const it=galItems[lbIdx]; if(!it) return;
+  document.getElementById('lb-img').src=it.public_url;
+  document.getElementById('lb-cap').textContent=[it.caption,catLbl(it.category)].filter(Boolean).join(' — ');
+  document.getElementById('lb-cnt').textContent=`${lbIdx+1} / ${galItems.length}`;
+}
+document.getElementById('lb').addEventListener('click',e=>{if(e.target===e.currentTarget)lbClose();});
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('lb').classList.contains('hidden')){
+    if(e.key==='ArrowLeft')lbNav(-1); if(e.key==='ArrowRight')lbNav(1); if(e.key==='Escape')lbClose();
+  }
+});
+
+/* ─────────────────────────────────────────────
+   GALLERY — ADMIN UPLOAD
+───────────────────────────────────────────── */
+const uz=document.getElementById('upload-zone');
+if(uz){
+  uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag');});
+  uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
+  uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag');handleUpload(e.dataTransfer.files);});
+}
+
+async function handleUpload(files) {
+  for(const file of files){
+    if(!file.type.startsWith('image/')) continue;
+    const cap=document.getElementById('g-cap').value.trim(), cat=document.getElementById('g-cat').value;
+    try{
+      const fd=new FormData(); fd.append('image',file); fd.append('caption',cap); fd.append('category',cat);
+      const it = await apiUpload('/api/gallery',fd,{admin:true});
+      galItems.unshift(it); toast('Photo ajoutée (Supabase Storage)','ok');
+    } catch{
+      // Fallback local base64
+      const b64=await toB64(file);
+      const it={id:'g'+Date.now(),public_url:b64,caption:cap,category:cat,created_at:new Date().toISOString()};
+      galItems.unshift(it); LS.s('demo_gal',galItems); toast('Photo ajoutée (mode démo)','ok');
+    }
+    renderGalAdm();
+  }
+}
+async function addGalUrl(){
+  const url=document.getElementById('g-url').value.trim(), cap=document.getElementById('g-cap').value.trim(), cat=document.getElementById('g-cat').value;
+  if(!url){toast('URL requise','err');return;}
+  try{ const it=await api('POST','/api/gallery/url',{url,caption:cap,category:cat},{admin:true}); galItems.unshift(it); }
+  catch{ const it={id:'g'+Date.now(),public_url:url,caption:cap,category:cat,created_at:new Date().toISOString()}; galItems.unshift(it); LS.s('demo_gal',galItems); }
+  document.getElementById('g-url').value=''; toast('Image ajoutée','ok'); renderGalAdm();
+}
+async function delGalItem(id){
+  if(!confirm('Supprimer cette photo ?')) return;
+  try{ await api('DELETE',`/api/gallery/${id}`,null,{admin:true}); } catch{}
+  galItems=galItems.filter(g=>g.id!==id); LS.s('demo_gal',galItems); renderGal(galCat); renderGalAdm(); toast('Photo supprimée');
+}
+function renderGalAdm(){
+  const grid=document.getElementById('gadm-grid'), cnt=document.getElementById('g-cnt'); if(!grid)return;
+  cnt.textContent=`${galItems.length} photos`;
+  grid.innerHTML=galItems.map(it=>`
+    <div class="gadm-item">
+      <img src="${it.public_url}" alt="" loading="lazy">
+      <div class="gadm-ov"><button onclick="delGalItem('${it.id}')">Supprimer</button></div>
+      <div class="gadm-cat">${catLbl(it.category)}</div>
+    </div>`).join('')||'<p style="color:var(--mu);font-size:13px">Aucune photo</p>';
+}
+function toB64(file){ return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);}); }
+
+/* ─────────────────────────────────────────────
+   BOOKING
+───────────────────────────────────────────── */
+function startBooking(svcId=null){
+  BK={svcId,date:null,slot:null,pm:'stripe',step:1}; stripeReady=false;
+  showPage('booking'); goStep(1,true); renderSpGrid(); renderCal(calY,calM); updSum();
+  const u=getUser();
+  if(u?.user){
+    setTimeout(()=>{
+      document.getElementById('b-fn').value=u.user.first_name||'';
+      document.getElementById('b-ln').value=u.user.last_name||'';
+      document.getElementById('b-em').value=u.user.email||'';
+      document.getElementById('b-ph').value=u.user.phone||'';
+      document.getElementById('b-prefill').classList.remove('hidden');
+    },50);
+  }
+}
+
+async function renderSpGrid(){
+  try{ svcCache=await api('GET','/api/services'); }
+  catch{ svcCache=LS.g('demo_svcs',demoSvcs()); }
+  document.getElementById('stat-svcs').textContent=svcCache.length;
+  document.getElementById('sp-grid').innerHTML=svcCache.map(s=>`
+    <div class="sp-item ${BK.svcId===s.id?'on':''}" onclick="selSvc('${s.id}')">
+      <div class="sp-ico">${s.icon}</div>
+      <div class="sp-name">${s.name}</div>
+      <div class="sp-meta">⏱ ${s.duration} min</div>
+      <div class="sp-price">${s.price}€</div>
+    </div>`).join('');
+}
+
+function selSvc(id){
+  BK.svcId=id;
+  document.querySelectorAll('.sp-item').forEach(el=>el.classList.toggle('on',el.getAttribute('onclick')===`selSvc('${id}')`));
+  updSum();
+}
+
+async function renderCal(y,m){
+  calY=y; calM=m;
+  let sch=demoSchArr(), blkd=[];
+  try{ const d=await api('GET','/api/schedule'); sch=d.schedule; blkd=(d.blocked_dates||[]).map(b=>b.date); }
+  catch{ sch=LS.g('demo_sch',demoSchArr()); blkd=LS.g('demo_blk',[]); }
+  const el=document.getElementById('book-cal');
+  const today=new Date(); today.setHours(0,0,0,0);
+  const MN=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const DN=['Di','Lu','Ma','Me','Je','Ve','Sa'];
+  const fd=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate();
+  let cells='';
+  for(let i=0;i<fd;i++) cells+='<div></div>';
+  for(let d=1;d<=dim;d++){
+    const dt=new Date(y,m,d); dt.setHours(0,0,0,0);
+    const ds=fmtD(dt), dow=dt.getDay();
+    const isPast=dt<today, isBlk=blkd.includes(ds);
+    const schDay=Array.isArray(sch)?sch.find(x=>x.day_of_week===dow):sch?.[dow];
+    const isCld=!schDay?.is_open;
+    let cls='cd'; if(isPast)cls+=' past'; else if(isBlk)cls+=' blk'; else if(isCld)cls+=' cld'; else cls+=' avail';
+    if(BK.date===ds) cls+=' sel';
+    cells+=`<div class="${cls}" onclick="${(!isPast&&!isBlk&&!isCld)?`selDate('${ds}')`:''}">${d}</div>`;
+  }
+  el.innerHTML=`
+    <div class="cal-hd">
+      <button class="cal-btn" onclick="renderCal(${m===0?y-1:y},${m===0?11:m-1})">‹</button>
+      <span class="cal-title">${MN[m]} ${y}</span>
+      <button class="cal-btn" onclick="renderCal(${m===11?y+1:y},${m===11?0:m+1})">›</button>
+    </div>
+    <div class="cal-grid">${DN.map(d=>`<div class="cal-dn">${d}</div>`).join('')}${cells}</div>`;
+}
+
+async function selDate(ds){
+  BK.date=ds; BK.slot=null; renderCal(calY,calM); await renderSlots(); updSum();
+}
+
+async function renderSlots(){
+  const sec=document.getElementById('slots-sec');
+  if(!BK.date){sec.classList.add('hidden');return;}
+  sec.classList.remove('hidden');
+  document.getElementById('slots-lbl').textContent=fdt(BK.date);
+  let slots=[];
+  try{
+    const d=await api('GET',`/api/appointments/slots?date=${BK.date}`);
+    if(!d.available){document.getElementById('slots-grid').innerHTML=`<p style="color:var(--mu);font-size:13px">${d.reason==='blocked'?'Jour bloqué':'Fermé ce jour'}</p>`;return;}
+    slots=d.slots;
+  } catch{
+    const sch=LS.g('demo_sch',demoSchArr()), dow=new Date(BK.date+'T00:00:00').getDay();
+    const day=Array.isArray(sch)?sch.find(x=>x.day_of_week===dow):sch?.[dow];
+    if(!day?.is_open){document.getElementById('slots-grid').innerHTML='<p style="color:var(--mu)">Fermé ce jour</p>';return;}
+    const dur=LS.g('demo_dur',30), taken=LS.g('demo_apts',[]).filter(a=>a.appointment_date===BK.date&&a.status!=='cancelled').map(a=>sliceTime(a.appointment_slot));
+    slots=genSlots(day.open_time.slice(0,5)||'09:00',day.close_time.slice(0,5)||'19:00',dur).map(t=>({time:t,taken:taken.includes(t)}));
+  }
+  document.getElementById('slots-grid').innerHTML=slots.map(s=>`<div class="slot ${s.taken?'tk':''} ${BK.slot===s.time?'on':''}" onclick="selSlot('${s.time}')">${s.time}</div>`).join('');
+}
+
+function selSlot(s){ BK.slot=s; document.querySelectorAll('.slot').forEach(el=>el.classList.toggle('on',el.textContent===s)); updSum(); }
+
+function selPm(pm){
+  BK.pm=pm;
+  document.getElementById('pm-stripe').classList.toggle('on',pm==='stripe');
+  document.getElementById('pm-onsite').classList.toggle('on',pm==='on_site');
+  document.getElementById('stripe-sec').classList.toggle('hidden',pm!=='stripe');
+  document.getElementById('onsite-sec').classList.toggle('hidden',pm!=='on_site');
+  document.getElementById('pay-btn-txt').textContent=pm==='on_site'?'Confirmer le rendez-vous':'Payer & Confirmer';
+  updSum();
+}
+
+function updSum(){
+  const svc=svcCache.find(s=>s.id===BK.svcId);
+  const el=document.getElementById('bsum-content');
+  if(!svc&&!BK.date){el.innerHTML='<p class="bsum-empty">Sélectionnez un soin<br>pour voir le récapitulatif</p>';return;}
+  el.innerHTML=`
+    ${svc?`<div class="bsr"><span class="bsr-l">Soin</span><span class="bsr-v">${svc.icon} ${svc.name}</span></div>
+    <div class="bsr"><span class="bsr-l">Durée</span><span class="bsr-v">${svc.duration} min</span></div>`:''}
+    ${BK.date?`<div class="bsr"><span class="bsr-l">Date</span><span class="bsr-v">${fdt(BK.date)}</span></div>`:''}
+    ${BK.slot?`<div class="bsr"><span class="bsr-l">Heure</span><span class="bsr-v">${BK.slot}</span></div>`:''}
+    <div class="bsr"><span class="bsr-l">Paiement</span><span class="bsr-v">${BK.pm==='on_site'?'🏠 Sur place':'💳 En ligne'}</span></div>
+    ${svc?`<div class="bsum-total"><span class="bst-l">Total</span><span class="bst-p">${svc.price}€</span></div>`:''}`;
+}
+
+function goStep(n,force=false){
+  if(!force&&n>BK.step){
+    if(n===2){if(!BK.svcId){toast('Sélectionnez un soin','err');return;} if(!BK.date){toast('Choisissez une date','err');return;} if(!BK.slot){toast('Choisissez un créneau','err');return;}}
+    if(n===3){
+      const fn=document.getElementById('b-fn').value.trim(), ln=document.getElementById('b-ln').value.trim();
+      const em=document.getElementById('b-em').value.trim(), ph=document.getElementById('b-ph').value.trim();
+      if(!fn||!ln){toast('Prénom et nom requis','err');return;} if(!em||!em.includes('@')){toast('Email invalide','err');return;} if(!ph){toast('Téléphone requis','err');return;}
+      if(BK.pm==='stripe') initStripe();
+    }
+  }
+  BK.step=n;
+  document.querySelectorAll('.bstep').forEach(s=>s.classList.remove('on'));
+  document.getElementById('bs-'+n)?.classList.add('on');
+  document.querySelectorAll('.step').forEach(s=>{
+    const sn=parseInt(s.dataset.s);
+    s.classList.remove('on','done');
+    if(sn===n)s.classList.add('on');
+    else if(sn<n){s.classList.add('done');s.querySelector('.step-n').textContent='✓';}
+    else s.querySelector('.step-n').textContent=sn;
+  });
+  window.scrollTo(0,0);
+}
+
+async function initStripe(){
+  if(stripeReady) return;
+  let pk=null;
+  try{ const cfg=await api('GET','/api/payments/config'); pk=cfg.publishable_key; if(cfg.configured) document.getElementById('stripe-demo').classList.add('hidden'); } catch{}
+  pk=pk||'pk_test_placeholder';
+  try{
+    if(pk.startsWith('pk_')){
+      stripeObj=Stripe(pk);
+      const els=stripeObj.elements();
+      cardEl=els.create('card',{style:{base:{fontFamily:"'DM Sans',sans-serif",fontSize:'14px',color:'#2C1A0E','::placeholder':{color:'#9B8070'}}}});
+      document.getElementById('card-element').innerHTML='';
+      cardEl.mount('#card-element');
+      cardEl.on('change',e=>{document.getElementById('card-errors').textContent=e.error?.message||'';});
+      stripeReady=true;
+    }
+  } catch(e){console.warn('Stripe:',e);}
+}
+
+async function processPay(){
+  const btn=document.getElementById('pay-btn'), txt=document.getElementById('pay-btn-txt');
+  btn.disabled=true; txt.textContent='Traitement…';
+  const body={service_id:BK.svcId,appointment_date:BK.date,appointment_slot:BK.slot,
+    first_name:document.getElementById('b-fn').value.trim(),last_name:document.getElementById('b-ln').value.trim(),
+    email:document.getElementById('b-em').value.trim(),phone:document.getElementById('b-ph').value.trim(),
+    notes:document.getElementById('b-notes').value.trim(),payment_method:BK.pm};
+  try{
+    let appt;
+    try{ appt=await api('POST','/api/appointments',body); }
+    catch{
+      // Fallback démo
+      const svc=svcCache.find(s=>s.id===BK.svcId);
+      appt={id:'BH-'+Date.now().toString(36).toUpperCase(),user_id:getUser()?.user?.id||null,
+        service_name:svc.name,service_icon:svc.icon,service_price:svc.price,...body,
+        status:BK.pm==='on_site'?'confirmed':'pending',created_at:new Date().toISOString()};
+      const apts=LS.g('demo_apts',[]); apts.push(appt); LS.s('demo_apts',apts);
+    }
+
+    if(BK.pm==='stripe'){
+      if(stripeObj&&cardEl){
+        try{
+          const pi=await api('POST','/api/payments/create-intent',{appointment_id:appt.id});
+          if(pi.client_secret&&!pi.demo){
+            const {paymentIntent,error}=await stripeObj.confirmCardPayment(pi.client_secret,{
+              payment_method:{card:cardEl,billing_details:{name:`${body.first_name} ${body.last_name}`,email:body.email}}});
+            if(error) throw new Error(error.message);
+            await api('PUT',`/api/appointments/${appt.id}/confirm-payment`,{stripe_payment_id:paymentIntent.id});
+          } else { await new Promise(r=>setTimeout(r,1200)); }
+        } catch(se){ document.getElementById('card-errors').textContent=se.message; btn.disabled=false; txt.textContent='Payer & Confirmer'; return; }
+      } else { await new Promise(r=>setTimeout(r,1000)); }
+    }
+
+    showConf(appt);
+  } catch(e){ toast(e.message,'err'); btn.disabled=false; txt.textContent=BK.pm==='on_site'?'Confirmer le rendez-vous':'Payer & Confirmer'; }
+}
+
+function showConf(appt){
+  const os=appt.payment_method==='on_site';
+  document.getElementById('conf-ico').textContent=os?'📅':'✓';
+  document.getElementById('conf-ico').className='conf-ico '+(os?'info':'ok');
+  document.getElementById('conf-title').textContent=os?'Rendez-vous réservé !':'Paiement confirmé !';
+  document.getElementById('conf-sub').textContent=os?'RDV confirmé. Réglez à l\'institut le jour J.':'Paiement reçu. À bientôt chez Belle Heure !';
+  document.getElementById('conf-det').innerHTML=`
+    <div class="cdr"><span class="cdr-l">Référence</span><strong>${appt.id}</strong></div>
+    <div class="cdr"><span class="cdr-l">Soin</span>${appt.service_icon} ${appt.service_name}</div>
+    <div class="cdr"><span class="cdr-l">Date</span>${fdt(appt.appointment_date)}</div>
+    <div class="cdr"><span class="cdr-l">Heure</span>${sliceTime(appt.appointment_slot)}</div>
+    <div class="cdr"><span class="cdr-l">Paiement</span>${os?'🏠 Sur place':'💳 Payé en ligne'}</div>
+    <div class="cdr"><span class="cdr-l">Montant</span><strong style="color:var(--go)">${appt.service_price}€</strong></div>`;
+  if(!getUser()) document.getElementById('conf-rdv').classList.add('hidden');
+  stripeReady=false; showPage('conf'); toast('Réservation confirmée 🎉','ok');
+}
+
+/* ─────────────────────────────────────────────
+   HOME
+───────────────────────────────────────────── */
+async function renderHome(){
+  try{ svcCache=await api('GET','/api/services'); }
+  catch{ svcCache=LS.g('demo_svcs',demoSvcs()); }
+  document.getElementById('stat-svcs').textContent=svcCache.length;
+  document.getElementById('home-svcs').innerHTML=svcCache.map(s=>`
+    <div class="svc-card" onclick="startBooking('${s.id}')">
+      <div class="svc-icon">${s.icon}</div>
+      <h3 class="svc-name">${s.name}</h3>
+      <p class="svc-desc">${s.description||s.desc||''}</p>
+      <div class="svc-foot">
+        <span class="svc-price">${s.price}€</span>
+        <span class="svc-dur">⏱ ${s.duration} min</span>
+      </div>
+    </div>`).join('');
+}
+
+/* ─────────────────────────────────────────────
+   ADMIN
+───────────────────────────────────────────── */
+function showAdminOrLogin(){ (admToken||LS.g('adm_ok',false))?showAdm():showPage('admin-login'); }
+function showAdm(){ showPage('admin'); showAdmPg('dashboard'); }
+
+async function doAdmLogin(){
+  const em=document.getElementById('adm-em').value.trim(), pw=document.getElementById('adm-pw').value;
+  if(!em||!pw){toast('Email et mot de passe requis','err');return;}
+  try{
+    if(SB){
+      const {data,error}=await SB.auth.signInWithPassword({email:em,password:pw});
+      if(error) throw new Error(error.message);
+      const {data:p}=await SB.from('profiles').select('role').eq('id',data.user.id).single();
+      if(p?.role!=='admin') throw new Error('Accès admin requis — mettez à jour votre rôle dans Supabase');
+      admToken=data.session.access_token;
+    } else {
+      if(em!=='admin@belleheure.fr'&&pw!=='admin123') throw new Error('Identifiants incorrects (démo: admin@belleheure.fr / admin123)');
+      admToken='demo_admin';
+    }
+    LS.s('adm_ok',true); showAdm(); toast('Connexion admin réussie','ok');
+  } catch(e){ toast(e.message,'err'); }
+}
+
+function admLogout(){ admToken=null; LS.r('adm_ok'); if(SB) SB.auth.signOut(); showPage('home'); toast('Déconnecté'); }
+
+async function showAdmPg(id){
+  document.querySelectorAll('.adm-pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.adm-nav-item').forEach(a=>a.classList.remove('on'));
+  document.getElementById('adm-'+id)?.classList.add('on');
+  document.getElementById('an-'+id)?.classList.add('on');
+  const fns={dashboard:renderDashboard,appointments:renderAdmApts,gallery:renderAdmGal,services:renderAdmSvcs,schedule:renderAdmSch,users:renderAdmUsers,settings:renderAdmSettings};
+  if(fns[id]) await fns[id]();
+}
+
+async function admApi(path){ try{return await api('GET',path,null,{admin:true});}catch{return null;} }
+
+/* Dashboard */
+async function renderDashboard(){
+  const apts=await admApi('/api/appointments')||LS.g('demo_apts',[]);
+  const today=fmtD(new Date());
+  const todayA=apts.filter(a=>a.appointment_date===today&&a.status!=='cancelled');
+  const upcom=apts.filter(a=>a.appointment_date>=today&&a.status!=='cancelled').sort((a,b)=>a.appointment_date.localeCompare(b.appointment_date)||(a.appointment_slot||'').localeCompare(b.appointment_slot||''));
+  const sRev=apts.filter(a=>a.status==='confirmed'&&a.payment_method==='stripe').reduce((s,a)=>s+parseFloat(a.service_price||0),0);
+  const oRev=apts.filter(a=>a.status==='confirmed'&&a.payment_method==='on_site').reduce((s,a)=>s+parseFloat(a.service_price||0),0);
+  document.getElementById('adm-stats').innerHTML=`
+    <div class="stat"><div class="stat-l">Aujourd'hui</div><div class="stat-v">${todayA.length} <span>RDV</span></div></div>
+    <div class="stat"><div class="stat-l">Total actifs</div><div class="stat-v">${apts.filter(a=>a.status!=='cancelled').length}</div></div>
+    <div class="stat"><div class="stat-l">CA Stripe</div><div class="stat-v">${sRev.toFixed(0)}<span>€</span></div><div class="stat-sub">Payé en ligne</div></div>
+    <div class="stat"><div class="stat-l">Sur place</div><div class="stat-v">${oRev.toFixed(0)}<span>€</span></div><div class="stat-sub">À encaisser</div></div>`;
+  document.getElementById('dash-tbody').innerHTML=upcom.slice(0,6).map(a=>`
+    <tr><td>${fdt(a.appointment_date)}</td><td><strong>${sliceTime(a.appointment_slot)}</strong></td>
+    <td>${a.first_name} ${a.last_name}</td><td>${a.service_icon} ${a.service_name}</td>
+    <td><span class="tag ${a.payment_method==='on_site'?'tb':'to'}">${a.payment_method==='on_site'?'Sur place':'Carte'}</span></td>
+    <td><span class="tag ${stag(a.status)}">${slbl(a.status)}</span></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:28px">Aucun RDV à venir</td></tr>';
+}
+
+/* Appointments */
+async function renderAdmApts(){
+  let apts=await admApi('/api/appointments')||LS.g('demo_apts',[]);
+  apts=apts.sort((a,b)=>(b.appointment_date||'').localeCompare(a.appointment_date||''));
+  const fs=document.getElementById('f-st')?.value, fd=document.getElementById('f-dt')?.value, fq=document.getElementById('f-q')?.value?.toLowerCase();
+  if(fs) apts=apts.filter(a=>a.status===fs); if(fd) apts=apts.filter(a=>a.appointment_date===fd);
+  if(fq) apts=apts.filter(a=>`${a.first_name} ${a.last_name} ${a.email} ${a.service_name}`.toLowerCase().includes(fq));
+  document.getElementById('f-cnt').textContent=`${apts.length} résultats`;
+  document.getElementById('apts-tbody').innerHTML=apts.length?apts.map(a=>`
+    <tr>
+      <td><code style="font-size:10px;color:var(--mu)">${a.id}</code></td>
+      <td>${fdt(a.appointment_date)}</td><td><strong>${sliceTime(a.appointment_slot)}</strong></td>
+      <td><div style="font-weight:500">${a.first_name} ${a.last_name}</div><div style="font-size:11px;color:var(--mu)">${a.email}</div></td>
+      <td>${a.service_icon} ${a.service_name}</td><td style="color:var(--go);font-weight:500">${a.service_price}€</td>
+      <td><span class="tag ${a.payment_method==='on_site'?'tb':'to'}">${a.payment_method==='on_site'?'Sur place':'Carte'}</span></td>
+      <td><span class="tag ${stag(a.status)}">${slbl(a.status)}</span></td>
+      <td><div class="td-act">
+        <button class="btn btn-ghost btn-sm" onclick="viewAppt('${a.id}')">Voir</button>
+        ${a.status!=='cancelled'?`<button class="btn btn-red btn-sm" onclick="updApptSt('${a.id}','cancelled')">Annuler</button>`:''}
+        ${a.status==='confirmed'?`<button class="btn btn-outline btn-sm" onclick="updApptSt('${a.id}','completed')">✓ Terminé</button>`:''}
+      </div></td>
+    </tr>`).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--mu);padding:32px">Aucun rendez-vous</td></tr>';
+}
+
+async function viewAppt(id){
+  const apts=await admApi('/api/appointments')||LS.g('demo_apts',[]);
+  const a=apts.find(x=>x.id===id); if(!a) return;
+  openModal('Détail du rendez-vous',
+    `<div style="background:var(--iv);border-radius:var(--rl);padding:18px">
+      <div class="det-row"><span class="det-l">Référence</span><code>${a.id}</code></div>
+      <div class="det-row"><span class="det-l">Statut</span><span class="tag ${stag(a.status)}">${slbl(a.status)}</span></div>
+      <div class="det-row"><span class="det-l">Date & Heure</span><strong>${fdt(a.appointment_date)} à ${sliceTime(a.appointment_slot)}</strong></div>
+      <div class="det-row"><span class="det-l">Soin</span>${a.service_icon} ${a.service_name} · ${a.service_price}€</div>
+      <div class="det-row"><span class="det-l">Client</span>${a.first_name} ${a.last_name}</div>
+      <div class="det-row"><span class="det-l">Email</span>${a.email}</div>
+      <div class="det-row"><span class="det-l">Téléphone</span>${a.phone}</div>
+      <div class="det-row"><span class="det-l">Paiement</span><span class="tag ${a.payment_method==='on_site'?'tb':'to'}">${a.payment_method==='on_site'?'Sur place':'Carte bancaire'}</span></div>
+      ${a.notes?`<div class="det-row"><span class="det-l">Notes</span>${a.notes}</div>`:''}
+      ${a.stripe_payment_id?`<div class="det-row"><span class="det-l">Stripe ID</span><code style="font-size:11px">${a.stripe_payment_id}</code></div>`:''}
+      <div class="det-row"><span class="det-l">Créé le</span>${new Date(a.created_at).toLocaleString('fr-FR')}</div>
+    </div>`,
+    `<select id="st-sel" style="padding:9px 12px"><option value="pending" ${a.status==='pending'?'selected':''}>En attente</option><option value="confirmed" ${a.status==='confirmed'?'selected':''}>Confirmé</option><option value="completed" ${a.status==='completed'?'selected':''}>Terminé</option><option value="cancelled" ${a.status==='cancelled'?'selected':''}>Annulé</option></select>
+    <button class="btn btn-gold" onclick="updApptSt('${a.id}',document.getElementById('st-sel').value)">Mettre à jour</button>
+    <button class="btn btn-ghost" onclick="closeModal()">Fermer</button>`);
+}
+
+async function updApptSt(id,status){
+  try{ await api('PUT',`/api/appointments/${id}/status`,{status},{admin:true}); }
+  catch{ const a=LS.g('demo_apts',[]); const i=a.findIndex(x=>x.id===id); if(i>=0){a[i].status=status;LS.s('demo_apts',a);} }
+  closeModal(); renderAdmApts(); renderDashboard(); toast('Statut mis à jour','ok');
+}
+
+/* Gallery admin */
+async function renderAdmGal(){ await loadGallery(); renderGalAdm(); }
+
+/* Services admin */
+async function renderAdmSvcs(){
+  let svcs=await admApi('/api/services')||LS.g('demo_svcs',demoSvcs());
+  // Forcer admin view
+  try{ svcs=await api('GET','/api/services',null,{admin:true}); } catch{}
+  document.getElementById('svcs-tbody').innerHTML=svcs.map(s=>`
+    <tr>
+      <td style="font-size:24px">${s.icon}</td>
+      <td style="font-weight:500">${s.name}</td>
+      <td style="color:var(--mu);font-size:12px;max-width:180px">${s.description||s.desc||''}</td>
+      <td>${s.duration} min</td>
+      <td style="color:var(--go);font-weight:500">${s.price}€</td>
+      <td><span class="tag ${s.active?'tg':'tm'}">${s.active?'Actif':'Inactif'}</span></td>
+      <td><div class="td-act">
+        <button class="btn btn-ghost btn-sm" onclick="openSvcModal('${s.id}')">Modifier</button>
+        <button class="btn btn-red btn-sm" onclick="delSvc('${s.id}')">Supprimer</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function openSvcModal(id=null){
+  const svcs=LS.g('demo_svcs',demoSvcs()); const s=id?svcs.find(x=>x.id===id):null;
+  openModal(s?'Modifier le soin':'Ajouter un soin',
+    `<div class="fg2">
+      <div class="fg"><label>Icône (emoji)</label><input type="text" id="sv-ico" value="${s?.icon||'✨'}" maxlength="2"></div>
+      <div class="fg"><label>Nom *</label><input type="text" id="sv-name" value="${s?.name||''}"></div>
+    </div>
+    <div class="fg"><label>Description</label><textarea id="sv-desc" rows="2">${s?.description||s?.desc||''}</textarea></div>
+    <div class="fg2">
+      <div class="fg"><label>Durée (min)</label><input type="number" id="sv-dur" value="${s?.duration||30}" min="5" step="5"></div>
+      <div class="fg"><label>Prix (€)</label><input type="number" id="sv-price" value="${s?.price||0}" min="0" step="0.5"></div>
+    </div>
+    <div class="fg"><label>Statut</label><select id="sv-active"><option value="1" ${s?.active!==false?'selected':''}>Actif</option><option value="0" ${s?.active===false?'selected':''}>Inactif</option></select></div>`,
+    `<button class="btn btn-gold" onclick="saveSvc('${id||''}')">Enregistrer</button><button class="btn btn-ghost" onclick="closeModal()">Annuler</button>`);
+}
+
+async function saveSvc(id){
+  const nm=document.getElementById('sv-name').value.trim(); if(!nm){toast('Nom requis','err');return;}
+  const body={icon:document.getElementById('sv-ico').value||'✨',name:nm,description:document.getElementById('sv-desc').value.trim(),duration:parseInt(document.getElementById('sv-dur').value),price:parseFloat(document.getElementById('sv-price').value),active:document.getElementById('sv-active').value==='1'};
+  try{
+    if(id) await api('PUT',`/api/services/${id}`,body,{admin:true});
+    else await api('POST','/api/services',body,{admin:true});
+  } catch{
+    const svcs=LS.g('demo_svcs',demoSvcs()); const svc={id:id||'s'+Date.now(),...body};
+    if(id){const i=svcs.findIndex(s=>s.id===id);if(i>=0)svcs[i]=svc;else svcs.push(svc);}else svcs.push(svc);
+    LS.s('demo_svcs',svcs);
+  }
+  closeModal(); renderAdmSvcs(); toast('Soin enregistré','ok');
+}
+
+async function delSvc(id){
+  if(!confirm('Supprimer ce soin ?')) return;
+  try{await api('DELETE',`/api/services/${id}`,null,{admin:true});}
+  catch{const svcs=LS.g('demo_svcs',demoSvcs()).filter(s=>s.id!==id);LS.s('demo_svcs',svcs);}
+  renderAdmSvcs(); toast('Soin supprimé');
+}
+
+/* Schedule admin */
+async function renderAdmSch(){
+  let sch=demoSchArr(), dur=30, blkd=[];
+  try{ const d=await api('GET','/api/schedule'); sch=d.schedule; dur=d.slot_duration; blkd=d.blocked_dates||[]; }
+  catch{ sch=LS.g('demo_sch',demoSchArr()); dur=LS.g('demo_dur',30); blkd=(LS.g('demo_blk',[])||[]).map(d=>({date:d})); }
+  const DN=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const schArr=Array.isArray(sch)?sch:Object.entries(sch).map(([k,v])=>({day_of_week:parseInt(k),...v}));
+  document.getElementById('sch-grid').innerHTML=schArr.map(d=>`
+    <div class="sch-day ${d.is_open?'':'cld'}">
+      <div class="sch-dname">${DN[d.day_of_week]}</div>
+      <div class="tog-row">
+        <div class="tog ${d.is_open?'on':''}" onclick="togDay(${d.day_of_week})"></div>
+        <span class="tog-lbl">${d.is_open?'Ouvert':'Fermé'}</span>
+      </div>
+      <div class="${d.is_open?'':'hidden'}" id="dh-${d.day_of_week}">
+        <div class="t-range">
+          <input type="time" value="${(d.open_time||'09:00').slice(0,5)}" onchange="updDayTime(${d.day_of_week},'open',this.value)" style="padding:5px 7px;font-size:11px">
+          <span>→</span>
+          <input type="time" value="${(d.close_time||'19:00').slice(0,5)}" onchange="updDayTime(${d.day_of_week},'close',this.value)" style="padding:5px 7px;font-size:11px">
+        </div>
+      </div>
+    </div>`).join('');
+  document.getElementById('slot-dur').value=dur;
+  renderBlkList((blkd||[]).map(b=>b.date||b));
+}
+
+function togDay(dow){
+  const sch=LS.g('demo_sch',demoSchArr());
+  const arr=Array.isArray(sch)?sch:Object.entries(sch).map(([k,v])=>({day_of_week:parseInt(k),...v}));
+  const d=arr.find(x=>x.day_of_week===dow); if(d) d.is_open=!d.is_open;
+  LS.s('demo_sch',arr); renderAdmSch();
+}
+function updDayTime(dow,f,v){
+  const sch=LS.g('demo_sch',demoSchArr());
+  const arr=Array.isArray(sch)?sch:Object.entries(sch).map(([k,v])=>({day_of_week:parseInt(k),...v}));
+  const d=arr.find(x=>x.day_of_week===dow); if(d) d[f==='open'?'open_time':'close_time']=v;
+  LS.s('demo_sch',arr);
+}
+async function saveSchedule(){
+  const arr=LS.g('demo_sch',demoSchArr()); const dur=parseInt(document.getElementById('slot-dur').value);
+  LS.s('demo_dur',dur);
+  try{ await api('PUT','/api/schedule',{schedule:Array.isArray(arr)?arr:Object.entries(arr).map(([k,v])=>({day_of_week:parseInt(k),...v})),slot_duration:dur},{admin:true}); } catch{}
+  toast('Planning enregistré','ok');
+}
+function renderBlkList(dates){
+  document.getElementById('blk-list').innerHTML=(dates||[]).length
+    ?(dates||[]).sort().map(d=>`<div class="blk-tag"><span>${fdt(d)}</span><button onclick="rmBlk('${d}')">✕</button></div>`).join('')
+    :'<p style="color:var(--mu);font-size:13px">Aucun jour bloqué</p>';
+}
+async function addBlkDate(){
+  const d=document.getElementById('blk-dt').value; if(!d){toast('Sélectionnez une date','err');return;}
+  try{ await api('POST','/api/schedule/blocked',{date:d},{admin:true}); }
+  catch{ const b=LS.g('demo_blk',[]); if(!b.includes(d)){b.push(d);LS.s('demo_blk',b);} }
+  toast(`${fdt(d)} bloqué`,'ok'); renderAdmSch();
+}
+async function rmBlk(d){
+  try{ await api('DELETE',`/api/schedule/blocked/${d}`,null,{admin:true}); }
+  catch{ const b=LS.g('demo_blk',[]).filter(x=>x!==d); LS.s('demo_blk',b); }
+  toast('Jour débloqué'); renderAdmSch();
+}
+
+/* Users admin */
+async function renderAdmUsers(){
+  let users=await admApi('/api/users')||LS.g('demo_users',[]);
+  const apts=await admApi('/api/appointments')||LS.g('demo_apts',[]);
+  const cnt=id=>apts.filter(a=>a.user_id===id).length;
+  document.getElementById('users-tbody').innerHTML=users.length?users.map(u=>`
+    <tr>
+      <td style="font-weight:500">${u.first_name} ${u.last_name}</td>
+      <td>${u.email||'—'}</td><td>${u.phone||'—'}</td>
+      <td><span class="tag ${u.role==='admin'?'to':'tm'}">${u.role==='admin'?'Admin':'Client'}</span></td>
+      <td style="color:var(--mu);font-size:12px">${u.created_at?new Date(u.created_at).toLocaleDateString('fr-FR'):'—'}</td>
+      <td>${cnt(u.id)}</td>
+      <td><div class="td-act">
+        ${u.role!=='admin'?`<button class="btn btn-outline btn-sm" onclick="setRole('${u.id}','admin')">→ Admin</button>`:`<button class="btn btn-ghost btn-sm" onclick="setRole('${u.id}','user')">→ Client</button>`}
+        <button class="btn btn-red btn-sm" onclick="delUser('${u.id}')">Supprimer</button>
+      </div></td>
+    </tr>`).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:32px">Aucun utilisateur inscrit</td></tr>';
+}
+async function setRole(id,role){
+  try{await api('PUT',`/api/users/${id}/role`,{role},{admin:true});}
+  catch{const u=LS.g('demo_users',[]); const x=u.find(x=>x.id===id); if(x)x.role=role; LS.s('demo_users',u);}
+  renderAdmUsers(); toast('Rôle mis à jour','ok');
+}
+async function delUser(id){
+  if(!confirm('Supprimer cet utilisateur ?')) return;
+  try{await api('DELETE',`/api/users/${id}`,null,{admin:true});}
+  catch{const u=LS.g('demo_users',[]).filter(x=>x.id!==id); LS.s('demo_users',u);}
+  renderAdmUsers(); toast('Utilisateur supprimé');
+}
+
+/* Settings admin */
+async function renderAdmSettings(){
+  let settings={};
+  try{settings=await api('GET','/api/users/settings',null,{admin:true});}catch{}
+  document.getElementById('s-name').value=settings.salon_name||'Belle Heure';
+  document.getElementById('s-email').value=settings.salon_email||'';
+  document.getElementById('s-phone').value=settings.salon_phone||'';
+  document.getElementById('s-address').value=settings.salon_address||'';
+  const h=HEALTH;
+  document.getElementById('int-status').innerHTML=`
+    <div class="ib ${h.supabase?'ib-gr':'ib-re'}">${h.supabase?'✓ Supabase connecté':'✗ Supabase non configuré — mode démo localStorage actif'}</div>
+    <div class="ib ${h.stripe?'ib-gr':'ib-am'}" style="margin-top:8px">${h.stripe?'✓ Stripe configuré — paiements réels actifs':'⚠️ Stripe non configuré — paiements en mode démo · Carte test: 4242 4242 4242 4242'}</div>`;
+}
+async function saveSettings(){
+  const body={salon_name:document.getElementById('s-name').value.trim(),salon_email:document.getElementById('s-email').value.trim(),salon_phone:document.getElementById('s-phone').value.trim(),salon_address:document.getElementById('s-address').value.trim()};
+  try{await api('PUT','/api/users/settings',body,{admin:true});}catch{}
+  toast('Paramètres enregistrés','ok');
+}
+
+/* ─────────────────────────────────────────────
+   PAGE ROUTER
+───────────────────────────────────────────── */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('page-'+id)?.classList.add('on');
+  window.scrollTo(0,0);
+  if(id==='home') renderHome();
+  if(id==='gallery') loadGallery();
+  if(id==='auth') switchTab('login');
+}
+
+/* ─────────────────────────────────────────────
+   MODAL
+───────────────────────────────────────────── */
+function openModal(ttl,bd,ft){
+  document.getElementById('mdl-ttl').textContent=ttl;
+  document.getElementById('mdl-bd').innerHTML=bd;
+  document.getElementById('mdl-ft').innerHTML=ft||'';
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+function closeModal(){ document.getElementById('modal-bg').classList.add('hidden'); }
+document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+/* ─────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────── */
+function toast(msg,type=''){
+  const el=document.createElement('div');
+  el.className='toast '+type;
+  el.textContent=(type==='ok'?'✓ ':type==='err'?'✕ ':'')+msg;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>el.remove(),3800);
+}
+
+/* ─────────────────────────────────────────────
+   UTILS
+───────────────────────────────────────────── */
+function fmtD(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function fdt(s){
+  if(!s) return '';
+  const [y,m,d]=s.split('-');
+  const mn=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  const dn=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const dt=new Date(parseInt(y),parseInt(m)-1,parseInt(d));
+  return `${dn[dt.getDay()]} ${parseInt(d)} ${mn[parseInt(m)-1]} ${y}`;
+}
+function sliceTime(t){ return (t||'').slice(0,5); }
+function stag(s){ return {confirmed:'tg',cancelled:'tr',completed:'tm',pending:'to'}[s]||'tm'; }
+function slbl(s){ return {confirmed:'Confirmé',cancelled:'Annulé',completed:'Terminé',pending:'En attente'}[s]||s; }
+function genSlots(open,close,dur){
+  const sl=[]; let [sh,sm]=open.split(':').map(Number);
+  const [eh,em]=close.split(':').map(Number); let cur=sh*60+sm, end=eh*60+em;
+  while(cur+dur<=end){ sl.push(`${String(Math.floor(cur/60)).padStart(2,'0')}:${String(cur%60).padStart(2,'0')}`); cur+=dur; }
+  return sl;
+}
+function demoSvcs(){return[
+  {id:'s1',name:'Épilation sourcils',icon:'🪮',description:'Mise en forme précise.',price:15,duration:15,active:true},
+  {id:'s2',name:'Soin du visage',icon:'✨',description:'Hydratation & luminosité.',price:55,duration:60,active:true},
+  {id:'s3',name:'Manucure',icon:'💅',description:'Soin des mains & vernis.',price:35,duration:45,active:true},
+  {id:'s4',name:'Pédicure',icon:'🦶',description:'Soin des pieds & vernis.',price:45,duration:60,active:true},
+  {id:'s5',name:'Maquillage',icon:'💄',description:'Maquillage professionnel.',price:65,duration:60,active:true},
+  {id:'s6',name:'Épilation corps',icon:'🌿',description:'Épilation à la cire.',price:30,duration:45,active:true},
+];}
+function demoSchArr(){return[0,1,2,3,4,5,6].map(d=>({day_of_week:d,is_open:d!==0,open_time:'09:00',close_time:d===6?'14:00':'19:00'}));}
+</script>
+</body>
+</html>
